@@ -6,4 +6,4 @@ The aim of this project is to provide a fast and lightweight library that helps 
 Screenshots
 -----------
 
-[(https://raw.github.com/humu2009/Pano.js/master/screenshots/chapel.jpg)]
+!(https://raw.github.com/humu2009/Pano.js/master/screenshots/chapel.jpg)
