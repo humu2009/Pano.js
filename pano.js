@@ -564,13 +564,13 @@ var Pano = Pano || {};
 			var numOf8Pixels = ~~(destWidth / 8);
 			var surplus = destWidth % 8;
 			for (var i=0; i<destHeight; i++) {
-				var	y = i / destHeight;
+				var y = i / destHeight;
 
 				// the ray for the first pixel of the scanline
-				var	rayX = origin[0] - up[0] * y;
-				var	rayY = origin[1] - up[1] * y;
-				var	rayZ = origin[2] - up[2] * y;
-				var	rayLen = Math.sqrt(rayX * rayX + rayY * rayY + rayZ * rayZ);
+				var rayX = origin[0] - up[0] * y;
+				var rayY = origin[1] - up[1] * y;
+				var rayZ = origin[2] - up[2] * y;
+				var rayLen = Math.sqrt(rayX * rayX + rayY * rayY + rayZ * rayZ);
 				
 				// tex coords for the first pixel of the scanline
 				var theta0 = thetaFactor * Math.acos(rayY / rayLen);
@@ -625,7 +625,7 @@ var Pano = Pano || {};
 					 */
 					if (!useBilinear) {
 						for (var j=0, theta256=~~(256*theta0), phi256=~~(256*phi0); j<rl; j++, theta256+=thetaInc256, phi256+=phiInc256) {
-							var	src = 4 * ((theta256 >> 8) * srcWidth + ((phi256 >> 8) + srcWidth) % srcWidth);
+							var src = 4 * ((theta256 >> 8) * srcWidth + ((phi256 >> 8) + srcWidth) % srcWidth);
 							data[dest    ] = pixels[src    ];
 							data[dest + 1] = pixels[src + 1];
 							data[dest + 2] = pixels[src + 2];
