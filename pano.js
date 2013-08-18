@@ -48,10 +48,9 @@ var Pano = Pano || {};
 						'	precision mediump float; \n' + 
 						'#endif	\n' + 
 						'attribute vec2 a_position; \n' + 
-						'attribute vec2 a_texcoord; \n' + 
-						'varying vec2 v_texcoord; \n' + 
+						'varying vec2 v_fraction; \n' + 
 						'void main(void) { \n' + 
-						'	v_texcoord = a_texcoord; \n' + 
+						'	v_fraction = vec2(0.5, -0.5) * a_position + vec2(0.5, 0.5); \n' + 
 						'	gl_Position = vec4(a_position, 0.0, 1.0); \n' + 
 						'}';
 	var frag_shader =	'#ifdef GL_ES \n' + 
@@ -63,9 +62,9 @@ var Pano = Pano || {};
 						'uniform vec3 u_camRight; \n' + 
 						'uniform vec3 u_camPlaneOrigin; \n' + 
 						'uniform sampler2D s_texture; \n' + 
-						'varying vec2 v_texcoord; \n' + 
+						'varying vec2 v_fraction; \n' + 
 						'void main(void) { \n' + 
-						'	vec3 ray = u_camPlaneOrigin + v_texcoord.x * u_camRight - v_texcoord.y * u_camUp; \n' + 
+						'	vec3 ray = u_camPlaneOrigin + v_fraction.x * u_camRight - v_fraction.y * u_camUp; \n' + 
 						'	ray = normalize(ray); \n' + 
 						'	float theta = acos(ray.y) / PI; \n' + 
 						'	float phi = 0.5 * (atan(ray.z, ray.x) + PI) / PI; \n' + 
@@ -388,6 +387,16 @@ var Pano = Pano || {};
 			}
 		}, 
 
+		jumpTo: function(heading, pitch, fov) {
+			this.cam_heading = heading;
+			this.cam_pitch = clamp(pitch, 0, 180);
+			this.cam_fov = clamp(fov, 30, 90);
+			this.update();
+		}, 
+
+		navigateTo: function(heading, pitch, fov, interval) {
+		}, 
+
 		maximize: function() {
 			if (!this.saved_canvas_pos) {
 				// save current size and position of the canvas
@@ -441,7 +450,7 @@ var Pano = Pano || {};
 
 		draw: function() {
 			// Adjust canvas's logical size to be the same as its inner size in pixels. 
-			// This is necessary when canvas has been resized.
+			// This is necessary for canvas may have been resized.
 			if (this.canvas.width != this.canvas.clientWidth)
 				this.canvas.width = this.canvas.clientWidth;
 			if (this.canvas.height != this.canvas.clientHeight)
@@ -679,7 +688,7 @@ var Pano = Pano || {};
 
 
 	/**
-		@class WebGLRenderer
+	 *	@class WebGLRenderer
 	 */
 	function WebGLRenderer(view) {
 		this.view = view;
@@ -731,9 +740,6 @@ var Pano = Pano || {};
 				this.canvas_quad.coords = gl.createBuffer();
 				gl.bindBuffer(gl.ARRAY_BUFFER, this.canvas_quad.coords);
 				gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, 1, 1, -1, 1]), gl.STATIC_DRAW);
-				this.canvas_quad.texcoords = gl.createBuffer();
-				gl.bindBuffer(gl.ARRAY_BUFFER, this.canvas_quad.texcoords);
-				gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 1, 1, 1, 1, 0, 0, 0]), gl.STATIC_DRAW);
 				gl.bindBuffer(gl.ARRAY_BUFFER, null);
 			}
 
@@ -758,13 +764,10 @@ var Pano = Pano || {};
 			gl.bindTexture(gl.TEXTURE_2D, this.img_texture);
 			gl.uniform1i(gl.getUniformLocation(this.program, 's_texture'), 0);
 
-			// render the canvas quad
+			// render to canvas
 			gl.enableVertexAttribArray(0);
 			gl.bindBuffer(gl.ARRAY_BUFFER, this.canvas_quad.coords);
 			gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
-			gl.enableVertexAttribArray(1);
-			gl.bindBuffer(gl.ARRAY_BUFFER, this.canvas_quad.texcoords);
-			gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 0, 0);
 			gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
 			gl.bindBuffer(gl.ARRAY_BUFFER, null);
 			gl.bindTexture(gl.TEXTURE_2D, null);
