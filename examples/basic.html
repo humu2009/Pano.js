@@ -1,0 +1,60 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 5.0 Transitional//EN">
+<HTML>
+ <HEAD>
+  <TITLE> Pano.js - Basic Example </TITLE>
+  <META NAME="Author" CONTENT="Pano.js">
+ </HEAD>
+
+ <BODY>
+	<div id="mainframe" style="width:800px; margin:auto; position:relative;">
+		<canvas id="cv" width="800" height="600" ></canvas>
+		<a id="reposition-toggle" style="position:absolute; left:760px; top:5px; width:36px; height:26px; cursor:pointer; z-index:1025; background: url(./resource/maximize.png);" onclick="layoutElements();"></a>
+		<p style="font-family:Arial,sans-serif;">This is an interior view of the <i>Chapel of the Maccabees</i> in <i>St. Pierre Cathedral</i>, Geneva. Picture by <strong><i>J-P. Scherrer</i></strong>, a professional photographer and panorama expert.</p>
+	</div>
+	<audio id="background-sound" autoplay style="display:none;">
+		<source src="media/bmv-147.oga" type="audio/ogg; codecs=vorbis">
+	</audio>
+	<script type="text/javascript" src="js/pano.js"></script>
+	<script type="text/javascript" src="js/stats.js"></script>
+	<script type="text/javascript">
+		var view = new Pano.View('cv');
+		view.load('panoramas/maccabees-chapel.jpg');
+
+		/*
+		 *	Create a statistic panel to display FPS info.
+		 */
+		var stats = new Stats;
+		stats.setMode(0);
+		stats.domElement.style.position = 'absolute';
+		stats.domElement.style.left = '5px';
+		stats.domElement.style.top = '5px';
+		document.getElementById('mainframe').appendChild(stats.domElement);
+
+		/*
+		 *	Collect FPS info by setting up the event handlers
+		 */
+		view.onEnterFrame = function() {
+			stats.begin();
+		};
+		view.onExitFrame = function() {
+			stats.end();
+		};
+
+		var reposition_button = document.getElementById('reposition-toggle');
+		function layoutElements() {
+			if (view.isMaximized) {
+				view.restore();
+				reposition_button.style.left = '760px';
+				reposition_button.style.position = 'absolute';
+				reposition_button.style.background = 'url(./resource/maximize.png)';
+			}
+			else {
+				view.maximize();
+				reposition_button.style.left = (view.domElement.clientWidth - 40) + 'px';
+				reposition_button.style.position = 'fixed';
+				reposition_button.style.background = 'url(./resource/restore.png)';
+			}
+		}
+  </script>
+ </BODY>
+</HTML>
