@@ -167,6 +167,9 @@ var Pano = Pano || {};
 		this.inertial_move = 'on';
 		this.image_filtering = 'on-idle';
 
+		this.img = null;
+		this.is_loading = false;
+
 		var forceWebGLRendering = false;
 		var forceSoftwareRendering = false;
 		if (params) {
@@ -304,13 +307,13 @@ var Pano = Pano || {};
 
 		var tick = function() {
 			if (self.is_navigating) {
-				// update the tweening engine to continue navigation
+				// update the tweening engine to perform navigating animations
 				TWEEN.update();
 			}
 			if (self.dirty) {
 				// lower idle flag
 				self.idle = false;
-				// draw a new frame and see if there are more animations
+				// draw a new frame and see if there are any more animation
 				var has_next_frame = false;
 				if (self.inertial_move == 'on') {
 					has_next_frame = inertial_yaw();
@@ -371,9 +374,17 @@ var Pano = Pano || {};
 		}, 
 
 		load: function(url, reset) {
+			// cancel downloading of the previous image if any
+			if (this.is_loading) {
+				this.img.abort();
+				this.is_loading = false;
+			}
+
 			var self = this;
-			var img = new Image;
-			img.onload = function() {
+			this.img = new Image;
+			this.img.onload = function() {
+				self.img = null;	// do not cache the image object in view instance
+				self.is_loading = false;
 				if (reset || reset == undefined) {
 					self.cam_heading = self.init_heading;
 					self.cam_pitch = self.init_pitch;
@@ -384,7 +395,8 @@ var Pano = Pano || {};
 				self.renderer.setImage(this);
 				self.update();
 			};
-			img.src = url;
+			this.img.src = url;
+			this.is_loading = true;
 		}, 
 
 		reset: function() {
@@ -433,7 +445,7 @@ var Pano = Pano || {};
 			this.update();
 		}, 
 
-		navigateTo: function(heading, pitch, fov, interval, callbackOnArrival, easingFn) {
+		navigateTo: function(heading, pitch, fov, duration, callbackOnArrival, easingFn) {
 			// prevent from starting another navigation when the current one is still active
 			if (this.is_navigating)
 				return;
@@ -441,7 +453,7 @@ var Pano = Pano || {};
 			heading = (heading != undefined) ? heading : this.cam_heading;
 			pitch = (pitch != undefined) ? clamp(pitch, 0, 180) : this.cam_pitch;
 			fov = (fov != undefined) ? clamp(fov, 30, 90) : this.cam_fov;
-			interval = (interval != undefined) ? interval : 2000;
+			duration = (duration != undefined) ? duration : 2000;
 			easingFn = easingFn || TWEEN.Easing.Quadratic.InOut;
 
 			var self = this;
@@ -450,10 +462,10 @@ var Pano = Pano || {};
 			var end = {heading: heading, pitch: pitch, fov: fov};
 			var camInterpolator = new CameraInterpolator(start, end);
 
-			var fraction = {n: 0};
-			var tween = (new TWEEN.Tween(fraction)).to({n: 0.999}, interval).easing(easingFn);
+			var fraction = {value: 0};
+			var tween = (new TWEEN.Tween(fraction)).to({value: 0.999}, duration).easing(easingFn);
 			tween.onUpdate(function() {
-				var cam = camInterpolator.interpolate(fraction.n);
+				var cam = camInterpolator.interpolate(fraction.value);
 				self.cam_heading = cam.heading;
 				self.cam_pitch = cam.pitch;
 				self.cam_fov = cam.fov;
@@ -702,7 +714,7 @@ var Pano = Pano || {};
 						phiInc256 = ~~(256 * deltaPhi / rl);
 
 					/*
-					 *	Linearly interpolate texels for each pixel inside this slice.
+					 *	Linearly interpolate texels for each pixel inside the slice.
 					 */
 					if (!useBilinear) {
 						for (var j=0, theta256=~~(256*theta0), phi256=~~(256*phi0); j<rl; j++, theta256+=thetaInc256, phi256+=phiInc256) {
@@ -866,6 +878,10 @@ var Pano = Pano || {};
 			var x0 = this.q0[0], y0 = this.q0[1], z0 = this.q0[2], w0 = this.q0[3];
 			var x1 = this.q1[0], y1 = this.q1[1], z1 = this.q1[2], w1 = this.q1[3];
 
+			/*
+			 *	Slerp between the start and the end quaternions using the given fraction value.
+			 */
+
 			var cosOmega = x0 * x1 + y0 * y1 + z0 * z1 + w0 * w1;
 			if (cosOmega < 0) {
 				x1 = -x1;
@@ -887,6 +903,7 @@ var Pano = Pano || {};
 				k1 = fraction;
 			}
 
+			// convert the result back to euler angles
 			var angles = quatToEuler(k0*x0 + k1*x1, k0*y0 + k1*y1, k0*z0 + k1*z1, k0*w0 + k1*w1);
 			var fov = k0 * this.fov0 + k1 * this.fov1;
 
