@@ -19,7 +19,7 @@
 	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE.
-**/
+ */
 
 
 var Pano = Pano || {};
@@ -77,6 +77,29 @@ var Pano = Pano || {};
 
 	function makeSFVec() {
 		return window.Float32Array ? (new window.Float32Array(arguments)) : Array.prototype.slice.call(arguments, 0);
+	}
+
+	function eulerToQuat(heading, pitch) {
+		var halfHeadingRads = 0.5 * heading * DEG2RAD;
+		var halfPitchRads = 0.5 * (pitch - 90) * DEG2RAD;
+
+		var ch = Math.cos(halfHeadingRads);
+		var sh = Math.sin(halfHeadingRads);
+		var cp = Math.cos(halfPitchRads);
+		var sp = Math.sin(halfPitchRads);
+
+		return [ch*sp, sh*cp, -sh*sp, ch*cp];
+	}
+
+	function quatToEuler(x, y, z, w) {
+		var sp = -2 * (y * z - w * x);
+		// floating point error may result in invalid inputs for asin()
+		sp = clamp(sp, -1, 1);
+
+		var pitch = Math.asin(sp) * RAD2DEG;
+		var heading = Math.atan2(x * z + w * y, 0.5 - x * x - y * y) * RAD2DEG;
+
+		return [heading, pitch+90];
 	}
 
 	function getUtilCanvas() {
@@ -197,7 +220,7 @@ var Pano = Pano || {};
 			evt.preventDefault();
 		});
 		this.canvas.addEventListener('mousemove', function(evt) {
-			if (self.button_states[0]) {
+			if (!self.is_navigating && self.button_states[0]) {
 				var deltaHeading = -(evt.clientX - self.pointer_position[0]) * 360 / self.canvas.width;
 				if (self.inertial_move == 'on') {
 					if ((deltaHeading > 0 && deltaHeading > self.inert_heading_step) || (deltaHeading < 0 && deltaHeading < self.inert_heading_step))
@@ -215,18 +238,20 @@ var Pano = Pano || {};
 			evt.preventDefault();
 		});
 		this.canvas.addEventListener(is_firefox ? 'DOMMouseScroll' : 'mousewheel', function(evt) {
-			var newFov = self.cam_fov - (is_firefox ? -40*evt.detail : evt.wheelDelta) / 60;
-			newFov = clamp(newFov, 30, 90);
-			var deltaFov = newFov - self.cam_fov;
-			if (Math.abs(deltaFov) > 0) {
-				if (self.inertial_move == 'on') {
-					if ((deltaFov > 0 && deltaFov > self.inert_fov_step) || (deltaFov < 0 && deltaFov < self.inert_fov_step))
-						self.inert_fov_step = deltaFov;
+			if (!self.is_navigating) {
+				var newFov = self.cam_fov - (is_firefox ? -40*evt.detail : evt.wheelDelta) / 60;
+				newFov = clamp(newFov, 30, 90);
+				var deltaFov = newFov - self.cam_fov;
+				if (Math.abs(deltaFov) > 0) {
+					if (self.inertial_move == 'on') {
+						if ((deltaFov > 0 && deltaFov > self.inert_fov_step) || (deltaFov < 0 && deltaFov < self.inert_fov_step))
+							self.inert_fov_step = deltaFov;
+					}
+					else {
+						self.cam_fov += deltaFov;
+					}
+					self.update();
 				}
-				else {
-					self.cam_fov += deltaFov;
-				}
-				self.update();
 			}
 			evt.preventDefault();
 		});
@@ -247,6 +272,8 @@ var Pano = Pano || {};
 		if (!this.renderer) {
 			this.renderer = new Canvas2DRenderer(this);
 		}
+
+		this.is_navigating = false;
 
 		this.on_load_handler = null;
 		this.enter_frame_handler = null;
@@ -276,6 +303,10 @@ var Pano = Pano || {};
 		};
 
 		var tick = function() {
+			if (self.is_navigating) {
+				// update the tweening engine to continue navigation
+				TWEEN.update();
+			}
 			if (self.dirty) {
 				// lower idle flag
 				self.idle = false;
@@ -357,6 +388,11 @@ var Pano = Pano || {};
 		}, 
 
 		reset: function() {
+			// stop navigation if any and reset camera
+			if (this.is_navigating) {
+				TWEEN.removeAll();
+				this.is_navigating = false;
+			}
 			this.cam_heading = this.init_heading;
 			this.cam_pitch = this.init_pitch;
 			this.cam_fov = this.init_fov;
@@ -388,13 +424,49 @@ var Pano = Pano || {};
 		}, 
 
 		jumpTo: function(heading, pitch, fov) {
-			this.cam_heading = heading;
-			this.cam_pitch = clamp(pitch, 0, 180);
-			this.cam_fov = clamp(fov, 30, 90);
+			if (heading != undefined)
+				this.cam_heading = heading;
+			if (pitch != undefined)
+				this.cam_pitch = clamp(pitch, 0, 180);
+			if (fov != undefined)
+				this.cam_fov = clamp(fov, 30, 90);
 			this.update();
 		}, 
 
-		navigateTo: function(heading, pitch, fov, interval) {
+		navigateTo: function(heading, pitch, fov, interval, callbackOnArrival, easingFn) {
+			// prevent from starting another navigation when the current one is still active
+			if (this.is_navigating)
+				return;
+
+			heading = (heading != undefined) ? heading : this.cam_heading;
+			pitch = (pitch != undefined) ? clamp(pitch, 0, 180) : this.cam_pitch;
+			fov = (fov != undefined) ? clamp(fov, 30, 90) : this.cam_fov;
+			interval = (interval != undefined) ? interval : 2000;
+			easingFn = easingFn || TWEEN.Easing.Quadratic.InOut;
+
+			var self = this;
+
+			var start = {heading: this.cam_heading, pitch: this.cam_pitch, fov: this.cam_fov};
+			var end = {heading: heading, pitch: pitch, fov: fov};
+			var camInterpolator = new CameraInterpolator(start, end);
+
+			var fraction = {n: 0};
+			var tween = (new TWEEN.Tween(fraction)).to({n: 0.999}, interval).easing(easingFn);
+			tween.onUpdate(function() {
+				var cam = camInterpolator.interpolate(fraction.n);
+				self.cam_heading = cam.heading;
+				self.cam_pitch = cam.pitch;
+				self.cam_fov = cam.fov;
+				self.update();
+			});
+			tween.onComplete(function() {
+				self.is_navigating = false;
+				if (callbackOnArrival && (typeof callbackOnArrival) == 'function')
+					callbackOnArrival.call(null);
+			});
+			tween.start();
+
+			this.is_navigating = true;
 		}, 
 
 		maximize: function() {
@@ -559,9 +631,9 @@ var Pano = Pano || {};
 			var useBilinear = this.view.image_filtering == 'on' || (this.view.idle && this.view.image_filtering == 'on-idle');
 
 			/*
-			 *	The idea is rather straightforward: calculate a ray for each pixel on canvas using the camera plane. Then  
+			 *	The idea is rather straightforward: calculate a ray for each pixel on canvas based upon the camera plane. Then  
 			 *	calculate corresponding texture coordinates from the spherical coodinates (phi, theta) to get correct texels. 
-			 *	For efficiency, we only do the calculation per 8 pixels and linearly interpolate texels inside each piece.
+			 *	For efficiency, we only execute the calculation for each slice of 8 pixels and then linearly interpolate texels inside slices.
 			 */
 
 			var thetaFactor = (srcHeight - 1) / Math.PI;
@@ -607,13 +679,13 @@ var Pano = Pano || {};
 
 					var x = k / destWidth;
 
-					// the ray for the end pixel of current piece
+					// the ray for the end pixel of current slice
 					rayX = origin[0] + right[0] * x - up[0] * y;
 					rayY = origin[1] + right[1] * x - up[1] * y;
 					rayZ = origin[2] + right[2] * x - up[2] * y;
 					rayLen = Math.sqrt(rayX * rayX + rayY * rayY + rayZ * rayZ);
 					
-					// tex coords for the end pixel of current piece
+					// tex coords for the end pixel of current slice
 					var theta1 = thetaFactor * Math.acos(rayY / rayLen);
 					var phi1 = phiFactor * (Math.atan2(rayZ, rayX) + Math.PI);
 
@@ -622,15 +694,15 @@ var Pano = Pano || {};
 					var deltaPhi = phi1 - phi0;
 					var thetaInc256 = ~~(256 * deltaTheta / rl);
 					var phiInc256;
-					if (deltaPhi < -srcHalfWidth)		// the piece passes through the right image boundary
+					if (deltaPhi < -srcHalfWidth)		// the slice passes through the right image boundary
 						phiInc256 = ~~(256 * (srcWidth + deltaPhi) / rl);
-					else if (deltaPhi > srcHalfWidth)	// the piece passes through the left image boundary
+					else if (deltaPhi > srcHalfWidth)	// the slice passes through the left image boundary
 						phiInc256 = ~~(256 * (-srcWidth + deltaPhi) / rl);
 					else
 						phiInc256 = ~~(256 * deltaPhi / rl);
 
 					/*
-					 *	Calculate texels for each pixel inside this piece using linear interpolation method.
+					 *	Linearly interpolate texels for each pixel inside this slice.
 					 */
 					if (!useBilinear) {
 						for (var j=0, theta256=~~(256*theta0), phi256=~~(256*phi0); j<rl; j++, theta256+=thetaInc256, phi256+=phiInc256) {
@@ -675,7 +747,7 @@ var Pano = Pano || {};
 						}
 					}
 
-					// continue to next piece, if any
+					// continue to next slice, if any
 					theta0 = theta1;
 					phi0 = phi1;
 				} while (!isDone);
@@ -778,6 +850,749 @@ var Pano = Pano || {};
 	};
 
 
+	/**
+	 *	@class CameraInterpolator
+	 */
+	function CameraInterpolator(start, end) {
+		this.q0 = eulerToQuat(start.heading, start.pitch);
+		this.fov0 = start.fov;
+		this.q1 = eulerToQuat(end.heading, end.pitch);
+		this.fov1 = end.fov;
+	}
+
+	CameraInterpolator.prototype = {
+
+		interpolate: function(fraction) {
+			var x0 = this.q0[0], y0 = this.q0[1], z0 = this.q0[2], w0 = this.q0[3];
+			var x1 = this.q1[0], y1 = this.q1[1], z1 = this.q1[2], w1 = this.q1[3];
+
+			var cosOmega = x0 * x1 + y0 * y1 + z0 * z1 + w0 * w1;
+			if (cosOmega < 0) {
+				x1 = -x1;
+				y1 = -y1;
+				z1 = -z1;
+				w1 = -w1;
+				cosOmega = -cosOmega;
+			}
+
+			var k0, k1;
+			if (cosOmega < 1) {
+				var omega = Math.acos(cosOmega);
+				var sinOmega = Math.sin(omega);
+				k0 = Math.sin((1 - fraction) * omega) / sinOmega;
+				k1 = Math.sin(fraction * omega) / sinOmega;
+			}
+			else {
+				k0 = 1 - fraction;
+				k1 = fraction;
+			}
+
+			var angles = quatToEuler(k0*x0 + k1*x1, k0*y0 + k1*y1, k0*z0 + k1*z1, k0*w0 + k1*w1);
+			var fov = k0 * this.fov0 + k1 * this.fov1;
+
+			return {heading: angles[0], pitch: angles[1], fov: fov};
+		}
+
+	};
+
+
 	Pano.View = View;
 
 }) ();
+
+
+
+/**
+ * @preserve Tween.js
+ *
+ * @author sole / http://soledadpenades.com
+ * @author mrdoob / http://mrdoob.com
+ * @author Robert Eisele / http://www.xarg.org
+ * @author Philippe / http://philippe.elsass.me
+ * @author Robert Penner / http://www.robertpenner.com/easing_terms_of_use.html
+ * @author Paul Lewis / http://www.aerotwist.com/
+ * @author lechecacharro
+ * @author Josh Faul / http://jocafa.com/
+ * @author egraether / http://egraether.com/
+ * @author endel / http://endel.me
+ *
+ * Tween.js is published under the MIT license.
+ */
+
+var TWEEN = TWEEN || ( function () {
+
+	var _tweens = [];
+
+	return {
+
+		REVISION: '10',
+
+		getAll: function () {
+
+			return _tweens;
+
+		},
+
+		removeAll: function () {
+
+			_tweens = [];
+
+		},
+
+		add: function ( tween ) {
+
+			_tweens.push( tween );
+
+		},
+
+		remove: function ( tween ) {
+
+			var i = _tweens.indexOf( tween );
+
+			if ( i !== -1 ) {
+
+				_tweens.splice( i, 1 );
+
+			}
+
+		},
+
+		update: function ( time ) {
+
+			if ( _tweens.length === 0 ) return false;
+
+			var i = 0, numTweens = _tweens.length;
+
+			time = time !== undefined ? time : ( window.performance !== undefined && window.performance.now !== undefined ? window.performance.now() : Date.now() );
+
+			while ( i < numTweens ) {
+
+				if ( _tweens[ i ].update( time ) ) {
+
+					i ++;
+
+				} else {
+
+					_tweens.splice( i, 1 );
+
+					numTweens --;
+
+				}
+
+			}
+
+			return true;
+
+		}
+	};
+
+} )();
+
+TWEEN.Tween = function ( object ) {
+
+	var _object = object;
+	var _valuesStart = {};
+	var _valuesEnd = {};
+	var _valuesStartRepeat = {};
+	var _duration = 1000;
+	var _repeat = 0;
+	var _delayTime = 0;
+	var _startTime = null;
+	var _easingFunction = TWEEN.Easing.Linear.None;
+	var _interpolationFunction = TWEEN.Interpolation.Linear;
+	var _chainedTweens = [];
+	var _onStartCallback = null;
+	var _onStartCallbackFired = false;
+	var _onUpdateCallback = null;
+	var _onCompleteCallback = null;
+
+	// Set all starting values present on the target object
+	for ( var field in object ) {
+
+		_valuesStart[ field ] = parseFloat(object[field], 10);
+
+	}
+
+	this.to = function ( properties, duration ) {
+
+		if ( duration !== undefined ) {
+
+			_duration = duration;
+
+		}
+
+		_valuesEnd = properties;
+
+		return this;
+
+	};
+
+	this.start = function ( time ) {
+
+		TWEEN.add( this );
+
+		_onStartCallbackFired = false;
+
+		_startTime = time !== undefined ? time : (window.performance !== undefined && window.performance.now !== undefined ? window.performance.now() : Date.now() );
+		_startTime += _delayTime;
+
+		for ( var property in _valuesEnd ) {
+
+			// check if an Array was provided as property value
+			if ( _valuesEnd[ property ] instanceof Array ) {
+
+				if ( _valuesEnd[ property ].length === 0 ) {
+
+					continue;
+
+				}
+
+				// create a local copy of the Array with the start value at the front
+				_valuesEnd[ property ] = [ _object[ property ] ].concat( _valuesEnd[ property ] );
+
+			}
+
+			_valuesStart[ property ] = _object[ property ];
+
+			if( ( _valuesStart[ property ] instanceof Array ) === false ) {
+				_valuesStart[ property ] *= 1.0; // Ensures we're using numbers, not strings
+			}
+
+			_valuesStartRepeat[ property ] = _valuesStart[ property ] || 0;
+
+		}
+
+		return this;
+
+	};
+
+	this.stop = function () {
+
+		TWEEN.remove( this );
+		return this;
+
+	};
+
+	this.delay = function ( amount ) {
+
+		_delayTime = amount;
+		return this;
+
+	};
+
+	this.repeat = function ( times ) {
+
+		_repeat = times;
+		return this;
+
+	};
+
+	this.easing = function ( easing ) {
+
+		_easingFunction = easing;
+		return this;
+
+	};
+
+	this.interpolation = function ( interpolation ) {
+
+		_interpolationFunction = interpolation;
+		return this;
+
+	};
+
+	this.chain = function () {
+
+		_chainedTweens = arguments;
+		return this;
+
+	};
+
+	this.onStart = function ( callback ) {
+
+		_onStartCallback = callback;
+		return this;
+
+	};
+
+	this.onUpdate = function ( callback ) {
+
+		_onUpdateCallback = callback;
+		return this;
+
+	};
+
+	this.onComplete = function ( callback ) {
+
+		_onCompleteCallback = callback;
+		return this;
+
+	};
+
+	this.update = function ( time ) {
+
+		if ( time < _startTime ) {
+
+			return true;
+
+		}
+
+		if ( _onStartCallbackFired === false ) {
+
+			if ( _onStartCallback !== null ) {
+
+				_onStartCallback.call( _object );
+
+			}
+
+			_onStartCallbackFired = true;
+
+		}
+
+		var elapsed = ( time - _startTime ) / _duration;
+		elapsed = elapsed > 1 ? 1 : elapsed;
+
+		var value = _easingFunction( elapsed );
+
+		for ( var property in _valuesEnd ) {
+
+			var start = _valuesStart[ property ] || 0;
+			var end = _valuesEnd[ property ];
+
+			if ( end instanceof Array ) {
+
+				_object[ property ] = _interpolationFunction( end, value );
+
+			} else {
+
+				if ( typeof(end) === "string" ) {
+					end = start + parseFloat(end, 10);
+				}
+
+				_object[ property ] = start + ( end - start ) * value;
+
+			}
+
+		}
+
+		if ( _onUpdateCallback !== null ) {
+
+			_onUpdateCallback.call( _object, value );
+
+		}
+
+		if ( elapsed == 1 ) {
+
+			if ( _repeat > 0 ) {
+
+				if( isFinite( _repeat ) ) {
+					_repeat--;
+				}
+
+				// reassign starting values, restart by making startTime = now
+				for( var property in _valuesStartRepeat ) {
+
+					if ( typeof( _valuesEnd[ property ] ) === "string" ) {
+						_valuesStartRepeat[ property ] = _valuesStartRepeat[ property ] + parseFloat(_valuesEnd[ property ], 10);
+					}
+
+					_valuesStart[ property ] = _valuesStartRepeat[ property ];
+
+				}
+
+				_startTime = time + _delayTime;
+
+				return true;
+
+			} else {
+
+				if ( _onCompleteCallback !== null ) {
+
+					_onCompleteCallback.call( _object );
+
+				}
+
+				for ( var i = 0, numChainedTweens = _chainedTweens.length; i < numChainedTweens; i ++ ) {
+
+					_chainedTweens[ i ].start( time );
+
+				}
+
+				return false;
+
+			}
+
+		}
+
+		return true;
+
+	};
+
+};
+
+TWEEN.Easing = {
+
+	Linear: {
+
+		None: function ( k ) {
+
+			return k;
+
+		}
+
+	},
+
+	Quadratic: {
+
+		In: function ( k ) {
+
+			return k * k;
+
+		},
+
+		Out: function ( k ) {
+
+			return k * ( 2 - k );
+
+		},
+
+		InOut: function ( k ) {
+
+			if ( ( k *= 2 ) < 1 ) return 0.5 * k * k;
+			return - 0.5 * ( --k * ( k - 2 ) - 1 );
+
+		}
+
+	},
+
+	Cubic: {
+
+		In: function ( k ) {
+
+			return k * k * k;
+
+		},
+
+		Out: function ( k ) {
+
+			return --k * k * k + 1;
+
+		},
+
+		InOut: function ( k ) {
+
+			if ( ( k *= 2 ) < 1 ) return 0.5 * k * k * k;
+			return 0.5 * ( ( k -= 2 ) * k * k + 2 );
+
+		}
+
+	},
+
+	Quartic: {
+
+		In: function ( k ) {
+
+			return k * k * k * k;
+
+		},
+
+		Out: function ( k ) {
+
+			return 1 - ( --k * k * k * k );
+
+		},
+
+		InOut: function ( k ) {
+
+			if ( ( k *= 2 ) < 1) return 0.5 * k * k * k * k;
+			return - 0.5 * ( ( k -= 2 ) * k * k * k - 2 );
+
+		}
+
+	},
+
+	Quintic: {
+
+		In: function ( k ) {
+
+			return k * k * k * k * k;
+
+		},
+
+		Out: function ( k ) {
+
+			return --k * k * k * k * k + 1;
+
+		},
+
+		InOut: function ( k ) {
+
+			if ( ( k *= 2 ) < 1 ) return 0.5 * k * k * k * k * k;
+			return 0.5 * ( ( k -= 2 ) * k * k * k * k + 2 );
+
+		}
+
+	},
+
+	Sinusoidal: {
+
+		In: function ( k ) {
+
+			return 1 - Math.cos( k * Math.PI / 2 );
+
+		},
+
+		Out: function ( k ) {
+
+			return Math.sin( k * Math.PI / 2 );
+
+		},
+
+		InOut: function ( k ) {
+
+			return 0.5 * ( 1 - Math.cos( Math.PI * k ) );
+
+		}
+
+	},
+
+	Exponential: {
+
+		In: function ( k ) {
+
+			return k === 0 ? 0 : Math.pow( 1024, k - 1 );
+
+		},
+
+		Out: function ( k ) {
+
+			return k === 1 ? 1 : 1 - Math.pow( 2, - 10 * k );
+
+		},
+
+		InOut: function ( k ) {
+
+			if ( k === 0 ) return 0;
+			if ( k === 1 ) return 1;
+			if ( ( k *= 2 ) < 1 ) return 0.5 * Math.pow( 1024, k - 1 );
+			return 0.5 * ( - Math.pow( 2, - 10 * ( k - 1 ) ) + 2 );
+
+		}
+
+	},
+
+	Circular: {
+
+		In: function ( k ) {
+
+			return 1 - Math.sqrt( 1 - k * k );
+
+		},
+
+		Out: function ( k ) {
+
+			return Math.sqrt( 1 - ( --k * k ) );
+
+		},
+
+		InOut: function ( k ) {
+
+			if ( ( k *= 2 ) < 1) return - 0.5 * ( Math.sqrt( 1 - k * k) - 1);
+			return 0.5 * ( Math.sqrt( 1 - ( k -= 2) * k) + 1);
+
+		}
+
+	},
+
+	Elastic: {
+
+		In: function ( k ) {
+
+			var s, a = 0.1, p = 0.4;
+			if ( k === 0 ) return 0;
+			if ( k === 1 ) return 1;
+			if ( !a || a < 1 ) { a = 1; s = p / 4; }
+			else s = p * Math.asin( 1 / a ) / ( 2 * Math.PI );
+			return - ( a * Math.pow( 2, 10 * ( k -= 1 ) ) * Math.sin( ( k - s ) * ( 2 * Math.PI ) / p ) );
+
+		},
+
+		Out: function ( k ) {
+
+			var s, a = 0.1, p = 0.4;
+			if ( k === 0 ) return 0;
+			if ( k === 1 ) return 1;
+			if ( !a || a < 1 ) { a = 1; s = p / 4; }
+			else s = p * Math.asin( 1 / a ) / ( 2 * Math.PI );
+			return ( a * Math.pow( 2, - 10 * k) * Math.sin( ( k - s ) * ( 2 * Math.PI ) / p ) + 1 );
+
+		},
+
+		InOut: function ( k ) {
+
+			var s, a = 0.1, p = 0.4;
+			if ( k === 0 ) return 0;
+			if ( k === 1 ) return 1;
+			if ( !a || a < 1 ) { a = 1; s = p / 4; }
+			else s = p * Math.asin( 1 / a ) / ( 2 * Math.PI );
+			if ( ( k *= 2 ) < 1 ) return - 0.5 * ( a * Math.pow( 2, 10 * ( k -= 1 ) ) * Math.sin( ( k - s ) * ( 2 * Math.PI ) / p ) );
+			return a * Math.pow( 2, -10 * ( k -= 1 ) ) * Math.sin( ( k - s ) * ( 2 * Math.PI ) / p ) * 0.5 + 1;
+
+		}
+
+	},
+
+	Back: {
+
+		In: function ( k ) {
+
+			var s = 1.70158;
+			return k * k * ( ( s + 1 ) * k - s );
+
+		},
+
+		Out: function ( k ) {
+
+			var s = 1.70158;
+			return --k * k * ( ( s + 1 ) * k + s ) + 1;
+
+		},
+
+		InOut: function ( k ) {
+
+			var s = 1.70158 * 1.525;
+			if ( ( k *= 2 ) < 1 ) return 0.5 * ( k * k * ( ( s + 1 ) * k - s ) );
+			return 0.5 * ( ( k -= 2 ) * k * ( ( s + 1 ) * k + s ) + 2 );
+
+		}
+
+	},
+
+	Bounce: {
+
+		In: function ( k ) {
+
+			return 1 - TWEEN.Easing.Bounce.Out( 1 - k );
+
+		},
+
+		Out: function ( k ) {
+
+			if ( k < ( 1 / 2.75 ) ) {
+
+				return 7.5625 * k * k;
+
+			} else if ( k < ( 2 / 2.75 ) ) {
+
+				return 7.5625 * ( k -= ( 1.5 / 2.75 ) ) * k + 0.75;
+
+			} else if ( k < ( 2.5 / 2.75 ) ) {
+
+				return 7.5625 * ( k -= ( 2.25 / 2.75 ) ) * k + 0.9375;
+
+			} else {
+
+				return 7.5625 * ( k -= ( 2.625 / 2.75 ) ) * k + 0.984375;
+
+			}
+
+		},
+
+		InOut: function ( k ) {
+
+			if ( k < 0.5 ) return TWEEN.Easing.Bounce.In( k * 2 ) * 0.5;
+			return TWEEN.Easing.Bounce.Out( k * 2 - 1 ) * 0.5 + 0.5;
+
+		}
+
+	}
+
+};
+
+TWEEN.Interpolation = {
+
+	Linear: function ( v, k ) {
+
+		var m = v.length - 1, f = m * k, i = Math.floor( f ), fn = TWEEN.Interpolation.Utils.Linear;
+
+		if ( k < 0 ) return fn( v[ 0 ], v[ 1 ], f );
+		if ( k > 1 ) return fn( v[ m ], v[ m - 1 ], m - f );
+
+		return fn( v[ i ], v[ i + 1 > m ? m : i + 1 ], f - i );
+
+	},
+
+	Bezier: function ( v, k ) {
+
+		var b = 0, n = v.length - 1, pw = Math.pow, bn = TWEEN.Interpolation.Utils.Bernstein, i;
+
+		for ( i = 0; i <= n; i++ ) {
+			b += pw( 1 - k, n - i ) * pw( k, i ) * v[ i ] * bn( n, i );
+		}
+
+		return b;
+
+	},
+
+	CatmullRom: function ( v, k ) {
+
+		var m = v.length - 1, f = m * k, i = Math.floor( f ), fn = TWEEN.Interpolation.Utils.CatmullRom;
+
+		if ( v[ 0 ] === v[ m ] ) {
+
+			if ( k < 0 ) i = Math.floor( f = m * ( 1 + k ) );
+
+			return fn( v[ ( i - 1 + m ) % m ], v[ i ], v[ ( i + 1 ) % m ], v[ ( i + 2 ) % m ], f - i );
+
+		} else {
+
+			if ( k < 0 ) return v[ 0 ] - ( fn( v[ 0 ], v[ 0 ], v[ 1 ], v[ 1 ], -f ) - v[ 0 ] );
+			if ( k > 1 ) return v[ m ] - ( fn( v[ m ], v[ m ], v[ m - 1 ], v[ m - 1 ], f - m ) - v[ m ] );
+
+			return fn( v[ i ? i - 1 : 0 ], v[ i ], v[ m < i + 1 ? m : i + 1 ], v[ m < i + 2 ? m : i + 2 ], f - i );
+
+		}
+
+	},
+
+	Utils: {
+
+		Linear: function ( p0, p1, t ) {
+
+			return ( p1 - p0 ) * t + p0;
+
+		},
+
+		Bernstein: function ( n , i ) {
+
+			var fc = TWEEN.Interpolation.Utils.Factorial;
+			return fc( n ) / fc( i ) / fc( n - i );
+
+		},
+
+		Factorial: ( function () {
+
+			var a = [ 1 ];
+
+			return function ( n ) {
+
+				var s = 1, i;
+				if ( a[ n ] ) return a[ n ];
+				for ( i = n; i > 1; i-- ) s *= i;
+				return a[ n ] = s;
+
+			};
+
+		} )(),
+
+		CatmullRom: function ( p0, p1, p2, p3, t ) {
+
+			var v0 = ( p2 - p0 ) * 0.5, v1 = ( p3 - p1 ) * 0.5, t2 = t * t, t3 = t * t2;
+			return ( 2 * p1 - 2 * p2 + v0 + v1 ) * t3 + ( - 3 * p1 + 3 * p2 - 2 * v0 - v1 ) * t2 + v0 * t + p1;
+
+		}
+
+	}
+
+};
+
