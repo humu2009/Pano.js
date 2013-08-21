@@ -407,7 +407,7 @@ var Pano = Pano || {};
 		}, 
 
 		reset: function() {
-			// stop navigation if any and reset camera
+			// stop navigation if any and reset the camera
 			if (this.is_navigating) {
 				TWEEN.removeAll();
 				this.is_navigating = false;
