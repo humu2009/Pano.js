@@ -1,0 +1,98 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 5.0 Transitional//EN">
+<HTML>
+	<HEAD>
+		<TITLE> Pano.js - Software Rendering Example </TITLE>
+		<META NAME="Author" CONTENT="Pano.js">
+		<style type="text/css">
+			/* ================================================================ 
+			This copyright notice must be untouched at all times.
+
+			The original version of this stylesheet and the associated (x)html
+			is available at http://www.stunicholls.com/menu/hover_drop_1.html
+			Copyright (c) 2005-2007 Stu Nicholls. All rights reserved.
+			This stylesheet and the associated (x)html may be modified in any 
+			way to fit your requirements.
+			=================================================================== */
+			#menu {list-style-type:none; padding:0; margin:0 0 0 3px;}
+			#menu ul {list-style-type:none; padding:0; margin:0;}
+			#menu li {float:left; background:#cdc; margin:3px 3px 0 0; border:1px solid #000; width:123px; height:25px;}
+			#menu li.sub {background:#aba;}
+
+			/* for IE5.5 and IE6 only */
+			#menu li a {display:block; color:#000; height:25px; font-family:arial, sans-serif; font-size:11px; line-height:24px; width:123px; text-decoration:none; text-align:center;}
+			#menu li a table {position:absolute; left:0; top:-1px; border-collapse:collapse; width:0; height:0;}
+
+			#menu :hover {color:#fff; background:#898; position:relative;}
+			#menu :hover > a {color:#fff; background:#898;}
+
+			#menu ul, 
+			#menu :hover ul ul,
+			#menu :hover ul :hover ul ul,
+			#menu :hover ul :hover ul ul.left {visibility:hidden; width:0; height:0; overflow:hidden;}
+
+			#menu :hover ul {visibility:visible; overflow:visible; position:absolute; height:auto; width:128px; left:-1px;top:26px; background:transparent;}
+
+			#menu :hover ul :hover ul,
+			#menu :hover ul :hover ul :hover ul {visibility:visible; overflow:visible; height:auto; width:128px; padding:9px 3px; left:100px; top:0;}
+
+			#menu :hover ul :hover ul.left,
+			#menu :hover ul :hover ul :hover ul.left {visibility:visible; overflow:visible; height:auto; width:128px; padding:9px 3px; left:-106px; top:0;}
+		</style>
+	</HEAD>
+
+	<BODY>
+		<div id="mainframe" style="width:640px; margin:auto; position:relative;">
+			<canvas id="cv" width="640" height="480" style="border: 1px solid;"></canvas>
+			<div style="position:absolute; left:5px; top:445px; opacity:0.85;">
+				<ul id="menu">
+					<li class="sub">
+						<a id="filtering" href="javascript:void(0);">Filtering: on-idle</a>
+						<ul>
+							<li><a href="javascript:void(0);" onclick="changeFilteringSetting('on');">on</a></li>
+							<li><a href="javascript:void(0);" onclick="changeFilteringSetting('off');">off</a></li>
+							<li><a href="javascript:void(0);" onclick="changeFilteringSetting('on-idle');">on-idle</a></li>
+						</ul>
+					</li>
+				</ul>
+			</div>
+			<p style="font-family:Arial,sans-serif;">The picture is published by <strong><i><a href="http://www.flickr.com/photos/gadl/">Alexandre Duret-Lutz</a></i></strong>, under a Creative Commons license. Some rights reserved.</p>
+		</div>
+		<script type="text/javascript" src="js/pano.js"></script>
+		<script type="text/javascript" src="js/stats.js"></script>
+		<script type="text/javascript">
+			/*
+			 *	Use the startup parameter 'rendering' to control which rendering backend will be used.
+			 */
+			var view = new Pano.View('cv', {rendering: 'software'});
+			view.load('panoramas/gare-de-morez.jpg');
+
+			/*
+			 *	Create a statistic panel to display FPS info.
+			 */
+			var stats = new Stats;
+			stats.setMode(0);
+			stats.domElement.style.position = 'absolute';
+			stats.domElement.style.left = '5px';
+			stats.domElement.style.top = '5px';
+			document.getElementById('mainframe').appendChild(stats.domElement);
+
+			/*
+			 *	Collect FPS info by setting up the event handlers
+			 */
+			view.onEnterFrame = function() {
+				stats.begin();
+			};
+			view.onExitFrame = function() {
+				stats.end();
+			};
+
+			// change filtering setting at runtime
+			function changeFilteringSetting(filtering) {
+				view.filtering = filtering;
+				document.getElementById('filtering').innerHTML = 'Filtering: ' + filtering;
+				// redraw with the new filtering setting
+				view.update();
+			}
+		</script>
+	</BODY>
+</HTML>
