@@ -57,7 +57,6 @@ var Pano = Pano || {};
 						'	precision mediump float; \n' + 
 						'#endif	\n' + 
 						'#define PI 3.1415927 \n' + 
-						'uniform vec3 u_camDir; \n' + 
 						'uniform vec3 u_camUp; \n' + 
 						'uniform vec3 u_camRight; \n' + 
 						'uniform vec3 u_camPlaneOrigin; \n' + 
@@ -346,6 +345,14 @@ var Pano = Pano || {};
 			return this.saved_canvas_pos != null;
 		}, 
 
+		get filtering() {
+			return this.image_filtering;
+		}, 
+
+		set filtering(value) {
+			this.image_filtering = value;
+		}, 
+
 		get onLoad() {
 			return this.on_load_handler;
 		}, 
@@ -400,7 +407,7 @@ var Pano = Pano || {};
 		}, 
 
 		reset: function() {
-			// stop navigation if any and reset camera
+			// stop navigation if any and reset the camera
 			if (this.is_navigating) {
 				TWEEN.removeAll();
 				this.is_navigating = false;
@@ -566,7 +573,7 @@ var Pano = Pano || {};
 			camPlane.origin[2] = camPlane.dir[2] + 0.5 * camPlane.up[2] - 0.5 * camPlane.right[2];
 
 			// render panorama with current camera plane
-			this.renderer.render(camPlane.origin, camPlane.dir, camPlane.up, camPlane.right);
+			this.renderer.render(camPlane.origin, camPlane.up, camPlane.right);
 
 			// update timestamp
 			this.last_draw_ms = Date.now();
@@ -620,7 +627,7 @@ var Pano = Pano || {};
 			this.img_height = h;
 		}, 
 
-		render: function(origin, dir, up, right) {
+		render: function(origin, up, right) {
 			if (!this.ctx2d || !this.img_pixels)
 				return;
 
@@ -637,7 +644,7 @@ var Pano = Pano || {};
 			var destHeight = this.canvas.height;
 
 			if (!this.canvas_data)
-				this.canvas_data = this.ctx2d.getImageData(0, 0, destWidth, destHeight);
+				this.canvas_data = this.ctx2d.createImageData(destWidth, destHeight);
 			var data = this.canvas_data.data;
 
 			var useBilinear = this.view.image_filtering == 'on' || (this.view.idle && this.view.image_filtering == 'on-idle');
@@ -808,7 +815,7 @@ var Pano = Pano || {};
 			this.img_height = img.height;
 		}, 
 
-		render: function(origin, dir, up, right) {
+		render: function(origin, up, right) {
 			if (!this.gl || !this.img_texture)
 				return;
 
@@ -838,7 +845,6 @@ var Pano = Pano || {};
 			gl.useProgram(this.program);
 
 			// update uniforms
-			gl.uniform3fv(gl.getUniformLocation(this.program, 'u_camDir'), dir);
 			gl.uniform3fv(gl.getUniformLocation(this.program, 'u_camUp'), up);
 			gl.uniform3fv(gl.getUniformLocation(this.program, 'u_camRight'), right);
 			gl.uniform3fv(gl.getUniformLocation(this.program, 'u_camPlaneOrigin'), origin);
