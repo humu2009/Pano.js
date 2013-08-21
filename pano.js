@@ -345,6 +345,14 @@ var Pano = Pano || {};
 			return this.saved_canvas_pos != null;
 		}, 
 
+		get filtering() {
+			return this.image_filtering;
+		}, 
+
+		set filtering(value) {
+			this.image_filtering = value;
+		}, 
+
 		get onLoad() {
 			return this.on_load_handler;
 		}, 
