@@ -7,7 +7,8 @@
 
  <BODY>
 	<div id="mainframe" style="width:800px; margin:auto; position:relative;">
-		<canvas id="cv" width="800" height="600" ></canvas>
+		<canvas id="cv" width="800" height="600" style="background:#666; border: 1px solid;"></canvas>
+		<div id="spinner" style="position:absolute; left:400px; top:300px;"></div>
 		<a id="reposition-toggle" style="position:absolute; left:760px; top:5px; width:36px; height:26px; cursor:pointer; z-index:1025; background: url(./resource/maximize.png);" onclick="layoutElements();"></a>
 		<p style="font-family:Arial,sans-serif;">This is an interior view of the <i>Chapel of the Maccabees</i> in <i>St. Pierre Cathedral</i>, Geneva. Picture by <strong><i>J-P. Scherrer</i></strong>, a professional photographer and panorama expert.</p>
 	</div>
@@ -15,10 +16,19 @@
 		<source src="media/bmv-147.oga" type="audio/ogg; codecs=vorbis">
 	</audio>
 	<script type="text/javascript" src="../pano.js"></script>
+	<script type="text/javascript" src="../external/spin.js"></script>
 	<script type="text/javascript" src="../external/stats.js"></script>
 	<script type="text/javascript">
-		var view = new Pano.View('cv');
+		var view = new Pano.View('cv', {rendering: 'webgl'});
 		view.load('panoramas/maccabees-chapel.jpg');
+
+		/*
+		 *	Create a spinning animation which will be displayed when image is in loading.
+		 */
+		var spinner = new Spinner({color: '#fff', lines: 12}).spin(document.getElementById('spinner'));
+		view.onLoad = view.onAbort = view.onError = function() {
+			spinner.stop();
+		};
 
 		/*
 		 *	Create a statistic panel to display FPS info.
@@ -30,9 +40,7 @@
 		stats.domElement.style.top = '5px';
 		document.getElementById('mainframe').appendChild(stats.domElement);
 
-		/*
-		 *	Collect FPS info by setting up the event handlers
-		 */
+		// collect FPS info by setting up view's onEnterFrame and onExitFrame event handlers
 		view.onEnterFrame = function() {
 			stats.begin();
 		};
