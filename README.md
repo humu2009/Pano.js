@@ -10,7 +10,7 @@ Pano.js can be easily integrated into online applications. The simplest usage on
 
     var view = new Pano.View(canvas_tag, {image: 'my_panorama.jpg'});
 
-It creates an instance of `Pano.View`, load a panorama image and display it in the given canvas element.
+It creates an instance of `Pano.View`, loads a panorama image and displays it in the given canvas element.
 
 Live Examples
 -------------
