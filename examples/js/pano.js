@@ -168,6 +168,7 @@ var Pano = Pano || {};
 
 		this.img = null;
 		this.is_loading = false;
+		this.is_loaded = false;
 
 		var forceWebGLRendering = false;
 		var forceSoftwareRendering = false;
@@ -222,25 +223,27 @@ var Pano = Pano || {};
 			evt.preventDefault();
 		});
 		this.canvas.addEventListener('mousemove', function(evt) {
-			if (!self.is_navigating && self.button_states[0]) {
-				var deltaHeading = -(evt.clientX - self.pointer_position[0]) * 360 / self.canvas.width;
-				if (self.inertial_move == 'on') {
-					if ((deltaHeading > 0 && deltaHeading > self.inert_heading_step) || (deltaHeading < 0 && deltaHeading < self.inert_heading_step))
-						self.inert_heading_step = deltaHeading;
+			if (self.is_loaded && !self.is_navigating) {
+				if (self.button_states[0]) {
+					var deltaHeading = -(evt.clientX - self.pointer_position[0]) * 360 / self.canvas.width;
+					if (self.inertial_move == 'on') {
+						if ((deltaHeading > 0 && deltaHeading > self.inert_heading_step) || (deltaHeading < 0 && deltaHeading < self.inert_heading_step))
+							self.inert_heading_step = deltaHeading;
+					}
+					else {
+						self.cam_heading += deltaHeading;
+					}
+					self.cam_pitch += (evt.clientY - self.pointer_position[1]) * 180 / self.canvas.height;
+					self.cam_pitch = clamp(self.cam_pitch, 0, 180);
+					self.pointer_position[0] = evt.clientX;
+					self.pointer_position[1] = evt.clientY;
+					self.update();
 				}
-				else {
-					self.cam_heading += deltaHeading;
-				}
-				self.cam_pitch += (evt.clientY - self.pointer_position[1]) * 180 / self.canvas.height;
-				self.cam_pitch = clamp(self.cam_pitch, 0, 180);
-				self.pointer_position[0] = evt.clientX;
-				self.pointer_position[1] = evt.clientY;
-				self.update();
 			}
 			evt.preventDefault();
 		});
 		this.canvas.addEventListener(is_firefox ? 'DOMMouseScroll' : 'mousewheel', function(evt) {
-			if (!self.is_navigating) {
+			if (self.is_loaded && !self.is_navigating) {
 				var newFov = self.cam_fov - (is_firefox ? -40*evt.detail : evt.wheelDelta) / 60;
 				newFov = clamp(newFov, 30, 90);
 				var deltaFov = newFov - self.cam_fov;
@@ -278,6 +281,8 @@ var Pano = Pano || {};
 		this.is_navigating = false;
 
 		this.on_load_handler = null;
+		this.on_abort_handler = null;
+		this.on_error_handler = null;
 		this.enter_frame_handler = null;
 		this.exit_frame_handler = null;
 
@@ -362,6 +367,24 @@ var Pano = Pano || {};
 				this.on_load_handler = callback;
 		}, 
 
+		get onAbort() {
+			return this.on_abort_handler;
+		}, 
+
+		set onAbort(callback) {
+			if (!callback || (typeof callback) == 'function')
+				this.on_abort_handler = callback;
+		}, 
+
+		get onError() {
+			return this.on_error_handler;
+		}, 
+
+		set onError(callback) {
+			if (!callback || (typeof callback) == 'function')
+				this.on_error_handler = callback;
+		}, 
+
 		get onEnterFrame() {
 			return this.enter_frame_handler;
 		}, 
@@ -392,6 +415,7 @@ var Pano = Pano || {};
 			this.img.onload = function() {
 				self.img = null;	// do not cache the image object in view instance
 				self.is_loading = false;
+				self.is_loaded = true;
 				if (reset || reset == undefined) {
 					self.cam_heading = self.init_heading;
 					self.cam_pitch = self.init_pitch;
@@ -401,6 +425,18 @@ var Pano = Pano || {};
 					self.on_load_handler.call(null, self);
 				self.renderer.setImage(this);
 				self.update();
+			};
+			this.img.onabort = function() {
+				self.img = null;
+				self.is_loading = false;
+				if (self.on_abort_handler)
+					self.on_abort_handler.call(null, self);
+			};
+			this.img.onerror = function() {
+				self.img = null;
+				self.is_loading = false;
+				if (self.on_error_handler)
+					self.on_error_handler.call(null, self);
 			};
 			this.img.src = url;
 			this.is_loading = true;

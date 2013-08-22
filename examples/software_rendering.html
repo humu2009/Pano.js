@@ -42,7 +42,8 @@
 
 	<BODY>
 		<div id="mainframe" style="width:640px; margin:auto; position:relative;">
-			<canvas id="cv" width="640" height="480" style="border: 1px solid;"></canvas>
+			<canvas id="cv" width="640" height="480" style="background:#666; border: 1px solid;"></canvas>
+			<div id="spinner" style="position:absolute; left:320px; top:240px;"></div>
 			<div style="position:absolute; left:5px; top:445px; opacity:0.85;">
 				<ul id="menu">
 					<li class="sub">
@@ -57,14 +58,23 @@
 			</div>
 			<p style="font-family:Arial,sans-serif;">The picture is published by <strong><i><a href="http://www.flickr.com/photos/gadl/">Alexandre Duret-Lutz</a></i></strong>, under a Creative Commons license. Some rights reserved.</p>
 		</div>
-		<script type="text/javascript" src="js/pano.js"></script>
-		<script type="text/javascript" src="js/stats.js"></script>
+		<script type="text/javascript" src="../pano.js"></script>
+		<script type="text/javascript" src="../external/spin.js"></script>
+		<script type="text/javascript" src="../external/stats.js"></script>
 		<script type="text/javascript">
 			/*
 			 *	Use the startup parameter 'rendering' to control which rendering backend will be used.
 			 */
 			var view = new Pano.View('cv', {rendering: 'software'});
 			view.load('panoramas/gare-de-morez.jpg');
+
+			/*
+			 *	Create a spinning animation which will be displayed when image is in loading.
+			 */
+			var spinner = new Spinner({color: '#fff', lines: 12}).spin(document.getElementById('spinner'));
+			view.onLoad = view.onAbort = view.onError = function() {
+				spinner.stop();
+			};
 
 			/*
 			 *	Create a statistic panel to display FPS info.
@@ -75,10 +85,7 @@
 			stats.domElement.style.left = '5px';
 			stats.domElement.style.top = '5px';
 			document.getElementById('mainframe').appendChild(stats.domElement);
-
-			/*
-			 *	Collect FPS info by setting up the event handlers
-			 */
+			// collect FPS info by setting up the onEnterFrame and onExitFrame event handlers
 			view.onEnterFrame = function() {
 				stats.begin();
 			};
