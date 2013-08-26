@@ -217,10 +217,17 @@ var Pano = Pano || {};
 			self.pointer_position[0] = evt.clientX;
 			self.pointer_position[1] = evt.clientY;
 			evt.preventDefault();
+			evt.stopPropagation();
 		});
 		this.canvas.addEventListener('mouseup', function(evt) {
 			self.button_states[evt.button] = false;
 			evt.preventDefault();
+			evt.stopPropagation();
+		});
+		this.canvas.addEventListener('mouseout', function(evt) {
+			self.button_states[evt.button] = false;
+			evt.preventDefault();
+			evt.stopPropagation();
 		});
 		this.canvas.addEventListener('mousemove', function(evt) {
 			if (self.is_loaded && !self.is_navigating) {
@@ -241,6 +248,7 @@ var Pano = Pano || {};
 				}
 			}
 			evt.preventDefault();
+			evt.stopPropagation();
 		});
 		this.canvas.addEventListener(is_firefox ? 'DOMMouseScroll' : 'mousewheel', function(evt) {
 			if (self.is_loaded && !self.is_navigating) {

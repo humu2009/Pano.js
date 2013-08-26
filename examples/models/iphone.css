@@ -1,0 +1,1466 @@
+/* =========================================================================== 
+	This file is made available by Nayan Suthar under the GNU General Public 
+	License and modified by Humu to fit the requirement of the application.
+
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+============================================================================== */
+
+* {
+	margin:0px;
+	padding:0px;
+}
+
+#documentBox {
+	width:100%;
+	height:100%;
+	background: white;
+	background: -webkit-radial-gradient(center, ellipse cover, rgba(255,255,255,1) 50%,rgba(214,214,214,1) 100%);
+	background: -moz-radial-gradient(center, ellipse cover, rgba(255,255,255,1) 50%,rgba(214,214,214,1) 100%);
+	background: -o-radial-gradient(center, ellipse cover, rgba(255,255,255,1) 50%,rgba(214,214,214,1) 100%);
+	background: -ms-radial-gradient(center, ellipse cover, rgba(255,255,255,1) 50%,rgba(214,214,214,1) 100%);
+	background: radial-gradient(center, ellipse cover, rgba(255,255,255,1) 50%,rgba(214,214,214,1) 100%);
+	-webkit-user-select:none;
+	-moz-user-select:none;
+	-o-user-select:none;
+	-ms-user-select:none;
+	user-select:none;
+}
+
+/*header*/
+#headerBox {
+	width:100%;
+	height:48px;
+	display:inline-block;
+	pointer-events:none;
+	position:fixed;
+	top:0px;
+	left:0px;
+	z-index:1000;
+	padding-left: 50px;
+	padding-top:10px;
+	background: #bbbbbb;
+}
+
+#headerBox h1 {
+	color:white;
+	font-family: arial;
+	font-size: 18px;
+}
+
+#headerBox p {
+	float:left;
+	color:white;
+	font-family: arial;
+	font-size: 12px;
+}
+
+/*iphone 3d container*/
+
+#theContainer {
+	width:300px;
+	height:500px;
+	margin-left:auto;
+	margin-right:auto;
+	margin-top:100px;
+	pointer-events:none;
+	-webkit-perspective:1000px;
+	-webkit-transform-style: preserve-3d;
+	-moz-perspective:1000px;
+	-moz-transform-style: preserve-3d;
+	-o-perspective:1000px;
+	-o-transform-style: preserve-3d;
+	-ms-perspective:1000px;
+	-ms-transform-style: preserve-3d;
+	perspective:1000px;
+	transform-style: preserve-3d;
+}
+
+
+#iphoneObject {
+	position:relative;
+	width:300px;
+	height:500px;
+	-webkit-backface-visibility: hidden;
+	-moz-backface-visibility: hidden;
+	-o-backface-visibility: hidden;
+	-ms-backface-visibility: hidden;
+	backface-visibility: hidden;
+	-webkit-transform-style: preserve-3d;
+	-moz-transform-style: preserve-3d;
+	-o-transform-style: preserve-3d;
+	-ms-transform-style: preserve-3d;
+	transform-style: preserve-3d;
+	-webkit-transform: rotateY(25deg) rotateX(15deg);
+	-moz-transform: rotateY(25deg) rotateX(15deg);
+	-o-transform: rotateY(25deg) rotateX(15deg);
+	-ms-transform: rotateY(25deg) rotateX(15deg);
+	transform: rotateY(25deg) rotateX(15deg);
+}
+
+
+.iphoneBodyC4 {
+	width:240px;
+	height:464px;
+	position:absolute;
+	display:block;
+	left:30px;
+	top:18px;
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(219,219,219,1)), color-stop(1%,rgba(66,66,66,1)), color-stop(3%,rgba(219,219,219,1)), color-stop(5%,rgba(219,219,219,1)), color-stop(9%,rgba(66,66,66,1)), color-stop(13%,rgba(219,219,219,1)), color-stop(91%,rgba(201,201,201,1)), color-stop(95%,rgba(69,69,69,1)), color-stop(100%,rgba(219,219,219,1)));
+	background: -moz-linear-gradient(top, rgba(219,219,219,1) 0%, rgba(66,66,66,1) 1%, rgba(219,219,219,1) 3%, rgba(219,219,219,1) 5%, rgba(66,66,66,1) 9%, rgba(219,219,219,1) 13%, rgba(201,201,201,1) 91%, rgba(69,69,69,1) 95%, rgba(219,219,219,1) 100%);
+	background: -o-linear-gradient(top, rgba(219,219,219,1) 0%, rgba(66,66,66,1) 1%, rgba(219,219,219,1) 3%, rgba(219,219,219,1) 5%, rgba(66,66,66,1) 9%, rgba(219,219,219,1) 13%, rgba(201,201,201,1) 91%, rgba(69,69,69,1) 95%, rgba(219,219,219,1) 100%);
+	background: -ms-linear-gradient(top, rgba(219,219,219,1) 0%, rgba(66,66,66,1) 1%, rgba(219,219,219,1) 3%, rgba(219,219,219,1) 5%, rgba(66,66,66,1) 9%, rgba(219,219,219,1) 13%, rgba(201,201,201,1) 91%, rgba(69,69,69,1) 95%, rgba(219,219,219,1) 100%);
+	background: linear-gradient(top, rgba(219,219,219,1) 0%,rgba(66,66,66,1) 1%,rgba(219,219,219,1) 3%,rgba(219,219,219,1) 5%,rgba(66,66,66,1) 9%,rgba(219,219,219,1) 13%,rgba(201,201,201,1) 91%,rgba(69,69,69,1) 95%,rgba(219,219,219,1) 100%);
+	-webkit-border-radius:36px;
+	-moz-border-radius:36px;
+	-o-border-radius:36px;
+	-ms-border-radius:36px;
+	border-radius:36px;
+}
+
+.iphoneBodyC3 {
+	width:240px;
+	height:464px;
+	position:absolute;
+	display:block;
+	left:30px;
+	top:18px;
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(219,219,219,1)), color-stop(1%,rgba(66,66,66,1)), color-stop(3%,rgba(219,219,219,1)), color-stop(5%,rgba(219,219,219,1)), color-stop(9%,rgba(66,66,66,1)), color-stop(13%,rgba(219,219,219,1)), color-stop(91%,rgba(201,201,201,1)), color-stop(95%,rgba(69,69,69,1)), color-stop(100%,rgba(219,219,219,1)));
+	background: -moz-linear-gradient(top, rgba(219,219,219,1) 0%, rgba(66,66,66,1) 1%, rgba(219,219,219,1) 3%, rgba(219,219,219,1) 5%, rgba(66,66,66,1) 9%, rgba(219,219,219,1) 13%, rgba(201,201,201,1) 91%, rgba(69,69,69,1) 95%, rgba(219,219,219,1) 100%);
+	background: -o-linear-gradient(top, rgba(219,219,219,1) 0%, rgba(66,66,66,1) 1%, rgba(219,219,219,1) 3%, rgba(219,219,219,1) 5%, rgba(66,66,66,1) 9%, rgba(219,219,219,1) 13%, rgba(201,201,201,1) 91%, rgba(69,69,69,1) 95%, rgba(219,219,219,1) 100%);
+	background: -ms-linear-gradient(top, rgba(219,219,219,1) 0%, rgba(66,66,66,1) 1%, rgba(219,219,219,1) 3%, rgba(219,219,219,1) 5%, rgba(66,66,66,1) 9%, rgba(219,219,219,1) 13%, rgba(201,201,201,1) 91%, rgba(69,69,69,1) 95%, rgba(219,219,219,1) 100%);
+	background: linear-gradient(top, rgba(219,219,219,1) 0%,rgba(66,66,66,1) 1%,rgba(219,219,219,1) 3%,rgba(219,219,219,1) 5%,rgba(66,66,66,1) 9%,rgba(219,219,219,1) 13%,rgba(201,201,201,1) 91%,rgba(69,69,69,1) 95%,rgba(219,219,219,1) 100%);
+	-webkit-border-radius:36px;
+	-moz-border-radius:36px;
+	-o-border-radius:36px;
+	-ms-border-radius:36px;
+	border-radius:36px;
+}
+
+.iphoneBodyC2 {
+	width:234px;
+	height:458px;
+	position:absolute;
+	display:block;
+	left:33px;
+	top:21px;
+	background:#000000;
+	-webkit-border-radius:36px;
+	-moz-border-radius:36px;
+	-o-border-radius:36px;
+	-ms-border-radius:36px;
+	border-radius:36px;
+}
+
+.iphoneBodyC1 {
+	width:234px;
+	height:458px;
+	position:absolute;
+	display:block;
+	left:33px;
+	top:21px;
+	background:#000000;
+	-webkit-border-radius:36px;
+	-moz-border-radius:36px;
+	-o-border-radius:36px;
+	-ms-border-radius:36px;
+	border-radius:36px;
+}
+
+
+
+#appleLogo {
+	width:50px;
+	height:50px;
+	margin-top:70px;
+}
+
+#iphoneBody76 p {
+	margin-top:10px;
+	color:white;
+	font-family: calibri;
+	font-size: 6px;
+	text-align:center;
+}
+
+#iphoneBody76 h1 {
+	margin-top: 170px;
+	color:white;
+	font-family: calibri;
+	font-size: 24px;
+	text-align:center;
+}
+
+
+
+#iphoneBody76 {
+	-webkit-transform: translateZ(-19px) rotateY(180deg);
+	-moz-transform: translateZ(-19px) rotateY(180deg);
+	-o-transform: translateZ(-19px) rotateY(180deg);
+	-ms-transform: translateZ(-19px) rotateY(180deg);
+	transform: translateZ(-19px) rotateY(180deg);
+	width:229px;
+	height:453px;
+	position:absolute;
+	display:block;
+	left:35.5px;
+	top:23.5px;
+	text-align:center;
+}
+
+#iphoneBody74 {
+	-webkit-transform: translateZ(-18px);
+	-moz-transform: translateZ(-18px);
+	-o-transform: translateZ(-18px);
+	-ms-transform: translateZ(-18px);
+	transform: translateZ(-18px);
+	width:231px;
+	height:455px;
+	position:absolute;
+	display:block;
+	left:34.5px;
+	top:22.5px;
+	background: #777777;
+}
+
+#iphoneBody72 {
+	-webkit-transform: translateZ(-17px);
+	-moz-transform: translateZ(-17px);
+	-o-transform: translateZ(-17px);
+	-ms-transform: translateZ(-17px);
+	transform: translateZ(-17px);
+	width:233px;
+	height:457px;
+	position:absolute;
+	display:block;
+	left:33.5px;
+	top:21.5px;
+}
+
+#iphoneBody71 {
+	-webkit-transform: translateZ(-16.5px);
+	-moz-transform: translateZ(-16.5px);
+	-o-transform: translateZ(-16.5px);
+	-ms-transform: translateZ(-16.5px);
+	transform: translateZ(-16.5px);
+}
+
+#iphoneBody70 {
+	-webkit-transform: translateZ(-16px);
+	-moz-transform: translateZ(-16px);
+	-o-transform: translateZ(-16px);
+	-ms-transform: translateZ(-16px);
+	transform: translateZ(-16px);
+}
+
+#iphoneBody69 {
+	-webkit-transform: translateZ(-15.5px);
+	-moz-transform: translateZ(-15.5px);
+	-o-transform: translateZ(-15.5px);
+	-ms-transform: translateZ(-15.5px);
+	transform: translateZ(-15.5px);
+}
+
+
+#iphoneBody67 {
+	-webkit-transform: translateZ(-14.5px);
+	-moz-transform: translateZ(-14.5px);
+	-ms-transform: translateZ(-14.5px);
+	-o-transform: translateZ(-14.5px);
+	transform: translateZ(-14.5px);
+}
+
+
+#iphoneBody65 {
+	-webkit-transform: translateZ(-13.5px);
+	-moz-transform: translateZ(-13.5px);
+	-o-transform: translateZ(-13.5px);
+	-ms-transform: translateZ(-13.5px);
+	transform: translateZ(-13.5px);
+}
+
+#iphoneBody64 {
+	-webkit-transform: translateZ(-13px);
+	-moz-transform: translateZ(-13px);
+	-o-transform: translateZ(-13px);
+	-ms-transform: translateZ(-13px);
+	transform: translateZ(-13px);
+	width:235px;
+	height:459px;
+	position:absolute;
+	display:block;
+	left:32.5px;
+	top:20.5px;
+}
+
+
+#iphoneBody62 {
+	-webkit-transform: translateZ(-12px);
+	-moz-transform: translateZ(-12px);
+	-o-transform: translateZ(-12px);
+	-ms-transform: translateZ(-12px);
+	transform: translateZ(-12px);
+	width:237px;
+	height:461px;
+	position:absolute;
+	display:block;
+	left:31.5px;
+	top:19.5px;
+	background:white;
+}
+
+
+#iphoneBody60 {
+	-webkit-transform: translateZ(-11px);
+	-moz-transform: translateZ(-11px);
+	-o-transform: translateZ(-11px);
+	-ms-transform: translateZ(-11px);
+	transform: translateZ(-11px);
+	width:239px;
+	height:463px;
+	position:absolute;
+	display:block;
+	left:30.5px;
+	top:18.5px;
+}
+
+#iphoneBody58 {
+	-webkit-transform: translateZ(-10px);
+	-moz-transform: translateZ(-10px);
+	-o-transform: translateZ(-10px);
+	-ms-transform: translateZ(-10px);
+	transform: translateZ(-10px);
+}
+
+#iphoneBody56 {
+	-webkit-transform: translateZ(-9px);
+	-moz-transform: translateZ(-9px);
+	-o-transform: translateZ(-9px);
+	-ms-transform: translateZ(-9px);
+	transform: translateZ(-9px);
+}
+
+#iphoneBody54 {
+	-webkit-transform: translateZ(-8px);
+	-moz-transform: translateZ(-8px);
+	-o-transform: translateZ(-8px);
+	-ms-transform: translateZ(-8px);
+	transform: translateZ(-8px);
+}
+
+#iphoneBody52 {
+	-webkit-transform: translateZ(-7px);
+	-moz-transform: translateZ(-7px);
+	-o-transform: translateZ(-7px);
+	-ms-transform: translateZ(-7px);
+	transform: translateZ(-7px);
+}
+
+#iphoneBody50 {
+	-webkit-transform: translateZ(-6px);
+	-moz-transform: translateZ(-6px);
+	-o-transform: translateZ(-6px);
+	-ms-transform: translateZ(-6px);
+	transform: translateZ(-6px);
+}
+
+#iphoneBody48 {
+	-webkit-transform: translateZ(-5px);
+	-moz-transform: translateZ(-5px);
+	-o-transform: translateZ(-5px);
+	-ms-transform: translateZ(-5px);
+	transform: translateZ(-5px);
+}
+
+#iphoneBody46 {
+	-webkit-transform: translateZ(-4px);
+	-moz-transform: translateZ(-4px);
+	-o-transform: translateZ(-4px);
+	-ms-transform: translateZ(-4px);
+	transform: translateZ(-4px);
+}
+
+#iphoneBody44 {
+	-webkit-transform: translateZ(-3px);
+	-moz-transform: translateZ(-3px);
+	-o-transform: translateZ(-3px);
+	-ms-transform: translateZ(-3px);
+	transform: translateZ(-3px);
+}
+
+#iphoneBody42 {
+	-webkit-transform: translateZ(-2px);
+	-moz-transform: translateZ(-2px);
+	-o-transform: translateZ(-2px);
+	-ms-transform: translateZ(-2px);
+	transform: translateZ(-2px);
+}
+
+#iphoneBody40 {
+	-webkit-transform: translateZ(-1px);
+	-moz-transform: translateZ(-1px);
+	-o-transform: translateZ(-1px);
+	-ms-transform: translateZ(-1px);
+	transform: translateZ(-1px);
+}
+
+#iphoneBody38 {
+	-webkit-transform: translateZ(0px);
+	-moz-transform: translateZ(0px);
+	-o-transform: translateZ(0px);
+	-ms-transform: translateZ(0px);
+	transform: translateZ(0px);
+}
+#iphoneBody36 {
+	-webkit-transform: translateZ(1px);
+	-moz-transform: translateZ(1px);
+	-ms-transform: translateZ(1px);
+	-o-transform: translateZ(1px);
+	transform: translateZ(1px);
+}
+
+#iphoneBody34 {
+	-webkit-transform: translateZ(2px);
+	-moz-transform: translateZ(2px);
+	-o-transform: translateZ(2px);
+	-ms-transform: translateZ(2px);
+	transform: translateZ(2px);
+}
+
+#iphoneBody32 {
+	-webkit-transform: translateZ(3px);
+	-moz-transform: translateZ(3px);
+	-o-transform: translateZ(3px);
+	-ms-transform: translateZ(3px);
+	transform: translateZ(3px);
+}
+
+#iphoneBody30 {
+	-webkit-transform: translateZ(4px);
+	-moz-transform: translateZ(4px);
+	-o-transform: translateZ(4px);
+	-ms-transform: translateZ(4px);
+	transform: translateZ(4px);
+}
+
+#iphoneBody28 {
+	-webkit-transform: translateZ(5px);
+	-moz-transform: translateZ(5px);
+	-o-transform: translateZ(5px);
+	-ms-transform: translateZ(5px);
+	transform: translateZ(5px);
+}
+#iphoneBody26 {
+	-webkit-transform: translateZ(6px);
+	-moz-transform: translateZ(6px);
+	-o-transform: translateZ(6px);
+	-ms-transform: translateZ(6px);
+	transform: translateZ(6px);
+}
+
+#iphoneBody24 {
+	-webkit-transform: translateZ(7px);
+	-moz-transform: translateZ(7px);
+	-o-transform: translateZ(7px);
+	-ms-transform: translateZ(7px);
+	transform: translateZ(7px);
+}
+
+#iphoneBody22 {
+	-webkit-transform: translateZ(8px);
+	-moz-transform: translateZ(8px);
+	-o-transform: translateZ(8px);
+	-ms-transform: translateZ(8px);
+	transform: translateZ(8px);
+}
+
+#iphoneBody20 {
+	-webkit-transform: translateZ(9px);
+	-moz-transform: translateZ(9px);
+	-o-transform: translateZ(9px);
+	-ms-transform: translateZ(9px);
+	transform: translateZ(9px);
+}
+
+#iphoneBody18 {
+	-webkit-transform: translateZ(10px);
+	-moz-transform: translateZ(10px);
+	-o-transform: translateZ(10px);
+	-ms-transform: translateZ(10px);
+	transform: translateZ(10px);
+}
+
+
+#iphoneBody16 {
+	-webkit-transform: translateZ(11px);
+	-moz-transform: translateZ(11px);
+	-o-transform: translateZ(11px);
+	-ms-transform: translateZ(11px);
+	transform: translateZ(11px);
+	width:238px;
+	height:462px;
+	position:absolute;
+	display:block;
+	left:31px;
+	top:19px;
+	background:#eeeeee;
+}
+
+#iphoneBody14 {
+	-webkit-transform: translateZ(12px);
+	-moz-transform: translateZ(12px);
+	-o-transform: translateZ(12px);
+	-ms-transform: translateZ(12px);
+	transform: translateZ(12px);
+	width:236px;
+	height:460px;
+	position:absolute;
+	display:block;
+	left:32px;
+	top:20px;
+	background:#eeeeee;
+}
+
+#iphoneBody12 {
+	-webkit-transform: translateZ(13px);
+	-moz-transform: translateZ(13px);
+	-o-transform: translateZ(13px);
+	-ms-transform: translateZ(13px);
+	transform: translateZ(13px);
+}
+
+#iphoneBody10 {
+	-webkit-transform: translateZ(14px);
+	-moz-transform: translateZ(14px);
+	-o-transform: translateZ(14px);
+	-ms-transform: translateZ(14px);
+	transform: translateZ(14px);
+}
+
+
+#iphoneBody8 {
+	-webkit-transform: translateZ(15px);
+	-moz-transform: translateZ(15px);
+	-o-transform: translateZ(15px);
+	-ms-transform: translateZ(15px);
+	transform: translateZ(15px);
+}
+
+#iphoneBody7 {
+	-webkit-transform: translateZ(15.5px);
+	-moz-transform: translateZ(15.5px);
+	-o-transform: translateZ(15.5px);
+	-ms-transform: translateZ(15.5px);
+	transform: translateZ(15.5px);
+}
+
+#iphoneBody6 {
+	-webkit-transform: translateZ(16px);
+	-moz-transform: translateZ(16.5px);
+	-o-transform: translateZ(16.5px);
+	-ms-transform: translateZ(16.5px);
+	transform: translateZ(16.5px);
+}
+
+
+#iphoneBody4 {
+	-webkit-transform: translateZ(17px);
+	-moz-transform: translateZ(17px);
+	-o-transform: translateZ(17px);
+	-ms-transform: translateZ(17px);
+	transform: translateZ(17px);
+	width:232px;
+	height:456px;
+	position:absolute;
+	display:block;
+	left:34px;
+	top:22px;
+	background: #333333;
+}
+
+
+#iphoneBody2 {
+	-webkit-transform: translateZ(18px);
+	-moz-transform: translateZ(18px);
+	-o-transform: translateZ(18px);
+	-ms-transform: translateZ(18px);
+	transform: translateZ(18px);
+	width:230px;
+	height:454px;
+	position:absolute;
+	display:block;
+	left:35px;
+	top:23px;
+	background: #333333;
+}
+
+#iphoneBody1 {
+	-webkit-transform-origin: 0 50%;
+	-moz-transform-origin: 0 50%;
+	-ms-transform-origin: 0 50%;
+	-o-transform-origin: 0 50%;
+	transform-origin: 0 50%;
+	-webkit-transform: translateZ(18.5px);
+	-moz-transform: translateZ(18.5px);
+	-o-transform: translateZ(18.5px);
+	-ms-transform: translateZ(18.5px);
+	transform: translateZ(18.5px);
+	width:229px;
+	height:453px;
+	position:absolute;
+	display:block;
+	left:35.5px;
+	top:23.5px;
+}
+
+#iStatusBar {
+	width:206px;
+	height:13px;
+	display:block;
+	position:absolute;
+	top:74.5px;
+	left:11.5px;
+}
+
+#iScreen {
+	width:206px;
+	height:304px;
+	display:block;
+	position:absolute;
+	top:74.5px;
+	left:11.5px;
+	cursor:move;
+	pointer-events:auto;
+}
+
+
+/*black edges*/
+
+.blackEdge1 {
+	width:100%;
+	height:4px;
+	display:block;
+	position:absolute;
+	left:0px;
+	background:black;
+}
+
+#iphoneBody14 figure {
+	top:400.5px;
+}
+
+#iphoneBody16 figure {
+	top:401.5px;
+}
+
+#iphoneBody18 figure {
+	top:402.5px;
+}
+
+#iphoneBody64 figure {
+	top:400px;
+}
+#iphoneBody63 figure {
+	top:400.5px;
+}
+#iphoneBody62 figure {
+	top:401px;
+}
+#iphoneBody61 figure {
+	top:401.5px;
+}
+#iphoneBody60 figure {
+	top:402px;
+}
+#iphoneBody59 figure {
+	top:402.5px;
+}
+
+.blackEdge2 {
+	width:100%;
+	height:4px;
+	display:block;
+	position:absolute;
+	left:0px;
+	background:black;
+	top:402.5px;
+}
+
+/*iphone menu button*/
+
+#iMenuButton {
+	width:40px;
+	height:40px;
+	-webkit-border-radius:20px;
+	-moz-border-radius:20px;
+	border:2px solid #151515;
+	display:block;
+	position:absolute;
+	top:422px;
+	left:130px;
+	background: -webkit-linear-gradient(left, rgba(114,114,114,1) 0%,rgba(0,0,0,1) 55%);
+	background: -moz-linear-gradient(left, rgba(114,114,114,1) 0%,rgba(0,0,0,1) 55%);
+	background: -o-linear-gradient(left, rgba(114,114,114,1) 0%,rgba(0,0,0,1) 55%);
+	background: -ms-linear-gradient(left, rgba(114,114,114,1) 0%,rgba(0,0,0,1) 55%);
+	background: linear-gradient(left, rgba(114,114,114,1) 0%,rgba(0,0,0,1) 55%);
+	-webkit-transform: translateZ(18.6px);
+	-moz-transform: translateZ(18.6px);
+	-o-transform: translateZ(18.6px);
+	-ms-transform: translateZ(18.6px);
+	transform: translateZ(18.6px);
+}
+
+
+#iMenuButtonInside {
+	width:10px;
+	height:10px;
+	display:block;
+	position:absolute;
+	top:13px;
+	left:13px;
+	-webkit-border-radius:3px;
+	-moz-border-radius:3px;
+	border:2px solid #bbbbbb;
+	background: -webkit-linear-gradient(left, rgba(114,114,114,1) 0%,rgba(0,0,0,1) 55%);
+	background: -moz-linear-gradient(left, rgba(114,114,114,1) 0%,rgba(0,0,0,1) 55%);
+	background: -o-linear-gradient(left, rgba(114,114,114,1) 0%,rgba(0,0,0,1) 55%);
+	background: -ms-linear-gradient(left, rgba(114,114,114,1) 0%,rgba(0,0,0,1) 55%);
+	background: linear-gradient(left, rgba(114,114,114,1) 0%,rgba(0,0,0,1) 55%);
+}
+
+
+
+/*speaker*/
+#iSpeaker {
+	width:46px;
+	height:10px;
+	-webkit-border-radius:6px;
+	-moz-border-radius:6px;
+	border-radius:6px;
+	border:1px solid #111111;
+	display:block;
+	position:absolute;
+	top:55px;
+	left:127px;
+	background: -webkit-linear-gradient(top, rgba(0,0,0,1) 12%,rgba(91,91,91,1) 100%);
+	-webkit-transform: translateZ(18.8px);
+	background: -moz-linear-gradient(top, rgba(0,0,0,1) 12%,rgba(91,91,91,1) 100%);
+	-moz-transform: translateZ(18.8px);
+	background: -o-linear-gradient(top, rgba(0,0,0,1) 12%,rgba(91,91,91,1) 100%);
+	-o-transform: translateZ(18.8px);
+	background: -ms-linear-gradient(top, rgba(0,0,0,1) 12%,rgba(91,91,91,1) 100%);
+	-ms-transform: translateZ(18.8px);
+	background: linear-gradient(top, rgba(0,0,0,1) 12%,rgba(91,91,91,1) 100%);
+	transform: translateZ(18.8px);
+}
+
+#iSpeakerInside {
+	width: 36px;
+	height:4px;
+	-webkit-border-radius:1px;
+	-moz-border-radius:1px;
+	-o-border-radius:1px;
+	-ms-border-radius:1px;
+	border-radius:1px;
+	display:block;
+	position:absolute;
+	top:3px;
+	left:5px;
+	background:gray;
+}
+
+
+/*front camera*/
+
+#frontCam {
+	width:14px;
+	height:14px;
+	-webkit-border-radius:7px;
+	-moz-border-radius:7px;
+	border-radius:7px;
+	display:block;
+	position:absolute;
+	top:55px;
+	left:100px;
+	-webkit-transform: translateZ(18.55px);
+	background: -webkit-linear-gradient(top, rgba(20,20,20,1) 12%,rgba(91,91,91,1) 100%);
+	-moz-transform: translateZ(18.55px);
+	background: -moz-linear-gradient(top, rgba(20,20,20,1) 12%,rgba(91,91,91,1) 100%);
+	-o-transform: translateZ(18.55px);
+	background: -o-linear-gradient(top, rgba(20,20,20,1) 12%,rgba(91,91,91,1) 100%);
+	-ms-transform: translateZ(18.55px);
+	background: -ms-linear-gradient(top, rgba(20,20,20,1) 12%,rgba(91,91,91,1) 100%);
+	transform: translateZ(18.55px);
+	background: linear-gradient(top, rgba(20,20,20,1) 12%,rgba(91,91,91,1) 100%);
+}
+
+#frontCamInside {
+	width:4px;
+	height:4px;
+	-webkit-border-radius:4px;
+	-moz-border-radius:4px;
+	-o-border-radius:4px;
+	-ms-border-radius:4px;
+	border-radius:4px;
+	display:block;
+	position:absolute;
+	top:4px;
+	left:4px;
+	background: -webkit-radial-gradient(center, ellipse cover, rgba(147,180,255,1) 1%,rgba(124,68,255,1) 100%);
+	background: -moz-radial-gradient(center, ellipse cover, rgba(147,180,255,1) 1%,rgba(124,68,255,1) 100%);
+	background: -o-radial-gradient(center, ellipse cover, rgba(147,180,255,1) 1%,rgba(124,68,255,1) 100%);
+	background: -ms-radial-gradient(center, ellipse cover, rgba(147,180,255,1) 1%,rgba(124,68,255,1) 100%);
+	background: radial-gradient(center, ellipse cover, rgba(147,180,255,1) 1%,rgba(124,68,255,1) 100%);
+	border: 1px solid #444444;
+}
+
+
+/*common button effects*/
+.buttonEdge {
+	background: -webkit-linear-gradient(left, rgba(244,244,244,1) 0%,rgba(150,150,150,1) 19%,rgba(247,247,247,1) 49%,rgba(158,158,158,1) 80%,rgba(244,244,244,1) 100%);
+	background: -moz-linear-gradient(left, rgba(244,244,244,1) 0%,rgba(150,150,150,1) 19%,rgba(247,247,247,1) 49%,rgba(158,158,158,1) 80%,rgba(244,244,244,1) 100%);
+	background: -o-linear-gradient(left, rgba(244,244,244,1) 0%,rgba(150,150,150,1) 19%,rgba(247,247,247,1) 49%,rgba(158,158,158,1) 80%,rgba(244,244,244,1) 100%);
+	background: -ms-linear-gradient(left, rgba(244,244,244,1) 0%,rgba(150,150,150,1) 19%,rgba(247,247,247,1) 49%,rgba(158,158,158,1) 80%,rgba(244,244,244,1) 100%);
+	background: linear-gradient(left, rgba(244,244,244,1) 0%,rgba(150,150,150,1) 19%,rgba(247,247,247,1) 49%,rgba(158,158,158,1) 80%,rgba(244,244,244,1) 100%);
+}
+
+.buttonTop {
+	background: -webkit-linear-gradient(left, rgba(234,234,234,1) 1%,rgba(247,247,247,1) 49%,rgba(234,234,234,1) 100%);
+	background: -moz-linear-gradient(left, rgba(234,234,234,1) 1%,rgba(247,247,247,1) 49%,rgba(234,234,234,1) 100%);
+	background: -o-linear-gradient(left, rgba(234,234,234,1) 1%,rgba(247,247,247,1) 49%,rgba(234,234,234,1) 100%);
+	background: -ms-linear-gradient(left, rgba(234,234,234,1) 1%,rgba(247,247,247,1) 49%,rgba(234,234,234,1) 100%);
+	background: linear-gradient(left, rgba(234,234,234,1) 1%,rgba(247,247,247,1) 49%,rgba(234,234,234,1) 100%);
+}
+
+
+/*pluse buttons*/
+
+#plusButtonBox {
+	-webkit-transform-style: preserve-3d;
+	-webkit-transform: rotateY(-90deg);
+	-moz-transform-style: preserve-3d;
+	-moz-transform: rotateY(-90deg);
+	-o-transform-style: preserve-3d;
+	-o-transform: rotateY(-90deg);
+	-ms-transform-style: preserve-3d;
+	-ms-transform: rotateY(-90deg);
+	transform-style: preserve-3d;
+	transform: rotateY(-90deg);
+	width:20px;
+	height:20px;
+	position:relative;
+	top:115px;
+	left:20px; 
+}
+
+#plusSign1 {
+	width:2px;
+	height:10px;
+	background:#777777;
+	-webkit-box-shadow: inset 1px 1px 2px 2px rgba(0, 0, 0, 0.2);
+	-moz-box-shadow: inset 1px 1px 2px 2px rgba(0, 0, 0, 0.2);
+	-o-box-shadow: inset 1px 1px 2px 2px rgba(0, 0, 0, 0.2);
+	-ms-box-shadow: inset 1px 1px 2px 2px rgba(0, 0, 0, 0.2);
+	box-shadow: inset 1px 1px 2px 2px rgba(0, 0, 0, 0.2);
+	display:block;
+	position:absolute;
+	top:2px;
+	left:6px;
+}
+
+#plusSign2 {
+	width:10px;
+	height:2px;
+	background:#777777;
+	-webkit-box-shadow: inset 1px 1px 2px 2px rgba(0, 0, 0, 0.2);
+	-moz-box-shadow: inset 1px 1px 2px 2px rgba(0, 0, 0, 0.2);
+	-o-box-shadow: inset 1px 1px 2px 2px rgba(0, 0, 0, 0.2);
+	-ms-box-shadow: inset 1px 1px 2px 2px rgba(0, 0, 0, 0.2);
+	box-shadow: inset 1px 1px 2px 2px rgba(0, 0, 0, 0.2);
+	display:block;
+	position:absolute;
+	top:6px;
+	left:2px;
+}
+
+#plusButton1 {
+	width:14px;
+	height:14px;
+	-webkit-border-radius:10px;
+	-moz-border-radius:10px;
+	-o-border-radius:10px;
+	-ms-border-radius:10px;
+	border-radius:10px;
+	position:absolute;
+	top:3px;
+	left:3px; 
+	-webkit-transform: translateZ(2px);
+	-moz-transform: translateZ(2px);
+	-o-transform: translateZ(2px);
+	-ms-transform: translateZ(2px);
+	transform: translateZ(2px);
+}
+
+#plusButton2 {
+	width:16px;
+	height:16px;
+	-webkit-border-radius:10px;
+	-moz-border-radius:10px;
+	-o-border-radius:10px;
+	-ms-border-radius:10px;
+	border-radius:10px;
+	position:absolute;
+	top:2px;
+	left:2px;
+	-webkit-transform: translateZ(1.5px);
+	-moz-transform: translateZ(1.5px);
+	-o-transform: translateZ(1.5px);
+	-ms-transform: translateZ(1.5px);
+	transform: translateZ(1.5px);
+}
+
+#plusButton3 {
+	width:16px;
+	height:16px;
+	-webkit-border-radius:10px;
+	-moz-border-radius:10px;
+	-o-border-radius:10px;
+	-ms-border-radius:10px;
+	border-radius:10px;
+	position:absolute;
+	top:2px;
+	left:2px;
+	-webkit-transform: translateZ(1px);
+	-moz-transform: translateZ(1px);
+	-o-transform: translateZ(1px);
+	-ms-transform: translateZ(1px);
+	transform: translateZ(1px);
+}
+
+#plusButton4 {
+	width:16px;
+	height:16px;
+	-webkit-border-radius:10px;
+	-moz-border-radius:10px;
+	-o-border-radius:10px;
+	-ms-border-radius:10px;
+	border-radius:10px;
+	position:absolute;
+	top:2px;
+	left:2px;
+	-webkit-transform: translateZ(0.5px);
+	-moz-transform: translateZ(0.5px);
+	-o-transform: translateZ(0.5px);
+	-ms-transform: translateZ(0.5px);
+	transform: translateZ(0.5px);
+}
+
+#plusButtonBack {
+	width:20px;
+	height:20px;
+	-webkit-border-radius:10px;
+	-moz-border-radius:10px;
+	-o-border-radius:10px;
+	-ms-border-radius:10px;
+	border-radius:10px;
+	background:#000000;
+	position:absolute;
+	top:0px;
+	left:0px;
+}
+
+/*minus button*/
+
+#minusButtonBox {
+	-webkit-transform-style: preserve-3d;
+	-webkit-transform: rotateY(-90deg);
+	-moz-transform-style: preserve-3d;
+	-moz-transform: rotateY(-90deg);
+	-o-transform-style: preserve-3d;
+	-o-transform: rotateY(-90deg);
+	-ms-transform-style: preserve-3d;
+	-ms-transform: rotateY(-90deg);
+	transform-style: preserve-3d;
+	transform: rotateY(-90deg);
+	width:20px;
+	height:20px;
+	position:relative;
+	top:140px;
+	left:20px; 
+}
+
+#minusSign {
+	width:10px;
+	height:2px;
+	background:#777777;
+	-webkit-box-shadow: inset 1px 1px 2px 2px rgba(0, 0, 0, 0.2);
+	-moz-box-shadow: inset 1px 1px 2px 2px rgba(0, 0, 0, 0.2);
+	-o-box-shadow: inset 1px 1px 2px 2px rgba(0, 0, 0, 0.2);
+	-ms-box-shadow: inset 1px 1px 2px 2px rgba(0, 0, 0, 0.2);
+	box-shadow: inset 1px 1px 2px 2px rgba(0, 0, 0, 0.2);
+	display:block;
+	position:absolute;
+	top:6px;
+	left:2px;
+}
+
+#minusButton1 {
+	width:14px;
+	height:14px;
+	-webkit-border-radius:10px;
+	-moz-border-radius:10px;
+	-o-border-radius:10px;
+	-ms-border-radius:10px;
+	border-radius:10px;
+	position:absolute;
+	top:3px;
+	left:3px; 
+	-webkit-transform: translateZ(2px);
+	-moz-transform: translateZ(2px);
+	-o-transform: translateZ(2px);
+	-ms-transform: translateZ(2px);
+	transform: translateZ(2px);
+}
+
+#minusButton2 {
+	width:16px;
+	height:16px;
+	-webkit-border-radius:10px;
+	-moz-border-radius:10px;
+	-o-border-radius:10px;
+	-ms-border-radius:10px;
+	border-radius:10px;
+	position:absolute;
+	top:2px;
+	left:2px;
+	-webkit-transform: translateZ(1.5px);
+	-moz-transform: translateZ(1.5px);
+	-o-transform: translateZ(1.5px);
+	-ms-transform: translateZ(1.5px);
+	transform: translateZ(1.5px);
+}
+
+#minusButton3 {
+	width:16px;
+	height:16px;
+	-webkit-border-radius:10px;
+	-moz-border-radius:10px;
+	-o-border-radius:10px;
+	-ms-border-radius:10px;
+	border-radius:10px;
+	position:absolute;
+	top:2px;
+	left:2px;
+	-webkit-transform: translateZ(1px);
+	-moz-transform: translateZ(1px);
+	-o-transform: translateZ(1px);
+	-ms-transform: translateZ(1px);
+	transform: translateZ(1px);
+}
+
+#minusButton4 {
+	width:16px;
+	height:16px;
+	-webkit-border-radius:10px;
+	-moz-border-radius:10px;
+	-o-border-radius:10px;
+	-ms-border-radius:10px;
+	border-radius:10px;
+	position:absolute;
+	top:2px;
+	left:2px;
+	-webkit-transform: translateZ(0.5px);
+	-moz-transform: translateZ(0.5px);
+	-o-transform: translateZ(0.5px);
+	-ms-transform: translateZ(0.5px);
+	transform: translateZ(0.5px);
+}
+
+#minusButtonBack {
+	width:20px;
+	height:20px;
+	-webkit-border-radius:10px;
+	-moz-border-radius:10px;
+	-o-border-radius:10px;
+	-ms-border-radius:10px;
+	border-radius:10px;
+	background:#000000;
+	position:absolute;
+	top:0px;
+	left:0px;
+}
+
+/*ringer button*/
+
+#ringerButtonBox {
+	-webkit-transform-style: preserve-3d;
+	-webkit-transform: rotateY(-90deg);
+	-moz-transform-style: preserve-3d;
+	-moz-transform: rotateY(-90deg);
+	-o-transform-style: preserve-3d;
+	-o-transform: rotateY(-90deg);
+	-ms-transform-style: preserve-3d;
+	-ms-transform: rotateY(-90deg);
+	transform-style: preserve-3d;
+	transform: rotateY(-90deg);
+	width:12px;
+	height:24px;
+	position:relative;
+	top:70px;
+	left:24px; 
+}
+
+#ringerButton1 {
+	width:6px;
+	height:18px;
+	-webkit-border-radius:6px;
+	-moz-border-radius:6px;
+	-o-border-radius:6px;
+	-ms-border-radius:6px;
+	border-radius:6px;
+	position:absolute;
+	top:3px;
+	left:3px; 
+	-webkit-transform: translateZ(2px);
+	-moz-transform: translateZ(2px);
+	-o-transform: translateZ(2px);
+	-ms-transform: translateZ(2px);
+	transform: translateZ(2px);
+}
+
+#ringerButton2 {
+	width:8px;
+	height:20px;
+	-webkit-border-radius:6px;
+	-moz-border-radius:6px;
+	-o-border-radius:6px;
+	-ms-border-radius:6px;
+	border-radius:6px;
+	position:absolute;
+	top:2px;
+	left:2px;
+	-webkit-transform: translateZ(1.5px);
+	-moz-transform: translateZ(1.5px);
+	-o-transform: translateZ(1.5px);
+	-ms-transform: translateZ(1.5px);
+	transform: translateZ(1.5px);
+}
+
+#ringerButton3 {
+	width:8px;
+	height:20px;
+	-webkit-border-radius:6px;
+	-moz-border-radius:6px;
+	-o-border-radius:6px;
+	-ms-border-radius:6px;
+	border-radius:6px;
+	position:absolute;
+	top:2px;
+	left:2px;
+	-webkit-transform: translateZ(1px);
+	-moz-transform: translateZ(1px);
+	-o-transform: translateZ(1px);
+	-ms-transform: translateZ(1px);
+	transform: translateZ(1px);
+}
+
+#ringerButton4 {
+	width:8px;
+	height:20px;
+	-webkit-border-radius:6px;
+	-moz-border-radius:6px;
+	-o-border-radius:6px;
+	-ms-border-radius:6px;
+	border-radius:6px;
+	position:absolute;
+	top:2px;
+	left:2px;
+	-webkit-transform: translateZ(0.5px);
+	-moz-transform: translateZ(0.5px);
+	-o-transform: translateZ(0.5px);
+	-ms-transform: translateZ(0.5px);
+	transform: translateZ(0.5px);
+}
+
+#ringerButtonBack {
+	width:12px;
+	height:24px;
+	-webkit-border-radius:6px;
+	-moz-border-radius:6px;
+	-o-border-radius:6px;
+	-ms-border-radius:6px;
+	border-radius:6px;
+	background:#000000;
+	position:absolute;
+	top:0px;
+	left:0px;
+}
+
+/*other side*/
+
+#simBox {
+	width:8px;
+	height:70px;
+	-webkit-border-radius:4px;
+	-moz-border-radius:4px;
+	-o-border-radius:4px;
+	-ms-border-radius:4px;
+	border-radius:4px;
+	display:block;
+	position:absolute;
+	top:220px;
+	left:265px;
+	border:1px solid gray;
+	-webkit-transform: rotateY(-90deg);
+	-moz-transform: rotateY(-90deg);
+	-o-transform: rotateY(-90deg);
+	-ms-transform: rotateY(-90deg);
+	transform: rotateY(-90deg);
+}
+
+#simHoleBox {
+	width:6px;
+	height:6px;
+	-webkit-border-radius:2px;
+	-moz-border-radius:2px;
+	-o-border-radius:2px;
+	-ms-border-radius:2px;
+	border-radius:2px;
+	display:block;
+	position:absolute;
+	top:61px;
+	left:1px;
+	background: -webkit-radial-gradient(center, ellipse cover, rgba(0,0,0,1) 25%,rgba(255,255,255,1) 100%);
+	background: -moz-radial-gradient(center, ellipse cover, rgba(0,0,0,1) 25%,rgba(255,255,255,1) 100%);
+	background: -o-radial-gradient(center, ellipse cover, rgba(0,0,0,1) 25%,rgba(255,255,255,1) 100%);
+	background: -ms-radial-gradient(center, ellipse cover, rgba(0,0,0,1) 25%,rgba(255,255,255,1) 100%);
+	background: radial-gradient(center, ellipse cover, rgba(0,0,0,1) 25%,rgba(255,255,255,1) 100%);
+}
+
+
+
+/*reset button*/
+
+#resetButtonBox {
+	-webkit-transform-style: preserve-3d;
+	-webkit-transform: rotateX(90deg);
+	-moz-transform-style: preserve-3d;
+	-moz-transform: rotateX(90deg);
+	-o-transform-style: preserve-3d;
+	-o-transform: rotateX(90deg);
+	-ms-transform-style: preserve-3d;
+	-ms-transform: rotateX(90deg);
+	transform-style: preserve-3d;
+	transform: rotateX(90deg);
+	width:36px;
+	height:12px;
+	position:absolute;
+	top:12px;
+	left:196px; 
+}
+
+#resetButton1 {
+	width:30px;
+	height:6px;
+	-webkit-border-radius:6px;
+	-moz-border-radius:6px;
+	-o-border-radius:6px;
+	-ms-border-radius:6px;
+	border-radius:6px;
+	background:#aaaaaa;
+	position:absolute;
+	top:3px;
+	left:3px; 
+	-webkit-transform: translateZ(2px);
+	-moz-transform: translateZ(2px);
+	-o-transform: translateZ(2px);
+	-ms-transform: translateZ(2px);
+	transform: translateZ(2px);
+}
+
+#resetButton2 {
+	width:32px;
+	height:8px;
+	-webkit-border-radius:6px;
+	-moz-border-radius:6px;
+	-o-border-radius:6px;
+	-ms-border-radius:6px;
+	border-radius:6px;
+	background:#aaaaaa;
+	position:absolute;
+	top:2px;
+	left:2px;
+	-webkit-transform: translateZ(1.5px);
+	-moz-transform: translateZ(1.5px);
+	-o-transform: translateZ(1.5px);
+	-ms-transform: translateZ(1.5px);
+	transform: translateZ(1.5px);
+}
+
+#resetButton3 {
+	width:32px;
+	height:8px;
+	-webkit-border-radius:6px;
+	-moz-border-radius:6px;
+	-o-border-radius:6px;
+	-ms-border-radius:6px;
+	border-radius:6px;
+	background:#aaaaaa;
+	position:absolute;
+	top:2px;
+	left:2px;
+	-webkit-transform: translateZ(1px);
+	-moz-transform: translateZ(1px);
+	-o-transform: translateZ(1px);
+	-ms-transform: translateZ(1px);
+	transform: translateZ(1px);
+}
+
+#resetButton4 {
+	width:32px;
+	height:8px;
+	-webkit-border-radius:6px;
+	-moz-border-radius:6px;
+	-o-border-radius:6px;
+	-ms-border-radius:6px;
+	border-radius:6px;
+	background:#aaaaaa;
+	position:absolute;
+	top:2px;
+	left:2px;
+	-webkit-transform: translateZ(0.5px);
+	-moz-transform: translateZ(0.5px);
+	-o-transform: translateZ(0.5px);
+	-ms-transform: translateZ(0.5px);
+	transform: translateZ(0.5px);
+}
+
+#resetButtonBack {
+	width:36px;
+	height:12px;
+	-webkit-border-radius:6px;
+	-moz-border-radius:6px;
+	-o-border-radius:6px;
+	-ms-border-radius:6px;
+	border-radius:6px;
+	background:#000000;
+	position:absolute;
+	top:0px;
+	left:0px;
+}
+
+
+/*headphone jack */
+
+#hfJackBox {
+	-webkit-transform: rotateX(90deg);
+	-moz-transform: rotateX(90deg);
+	-o-transform: rotateX(90deg);
+	-ms-transform: rotateX(90deg);
+	transform: rotateX(90deg);
+	width:18px;
+	height:18px;
+	position:absolute;
+	top:9px;
+	left:76px; 
+}
+
+#hfJack1 {
+	width:18px;
+	height:18px;
+	-webkit-border-radius:10px;
+	-moz-border-radius:10px;
+	-o-border-radius:10px;
+	-ms-border-radius:10px;
+	border-radius:10px;
+	background:#aaaaaa;
+	border:1px solid black;
+	position:absolute;
+	top:0px;
+	left:0px; 
+}
+
+#hfJack2 {
+	width:16px;
+	height:16px;
+	-webkit-border-radius:10px;
+	-moz-border-radius:10px;
+	-o-border-radius:10px;
+	-ms-border-radius:10px;
+	border-radius:10px;
+	background:#eeeeee;
+	position:absolute;
+	top:1px;
+	left:1px;
+}
+
+#hfJack3 {
+	width:14px;
+	height:14px;
+	-webkit-border-radius:10px;
+	-moz-border-radius:10px;
+	-o-border-radius:10px;
+	-ms-border-radius:10px;
+	border-radius:10px;
+	background:#000000;
+	position:absolute;
+	top:1px;
+	left:1px;
+}
+
+
+
+/*bottom*/
+#bottomSocket {
+	width:100px;
+	height: 12px;
+	display:block;
+	background:black;
+	position:absolute;
+	top:476.5px;
+	left:100px;
+	-webkit-transform:rotateX(90deg);
+	-moz-transform:rotateX(90deg);
+	-o-transform:rotateX(90deg);
+	-ms-transform:rotateX(90deg);
+	transform:rotateX(90deg);
+}
+
+/*iphone Shoadow*/
+
+#shadowContainer {
+	width:500px;
+	margin-left:auto;
+	margin-right:auto;
+	position:absolute;
+	top:350px;
+	left:-100px;
+	-webkit-transform: rotateY(25deg) rotateX(90deg);
+	-moz-transform: rotateY(25deg) rotateX(90deg);
+	-o-transform: rotateY(25deg) rotateX(90deg);
+	-ms-transform: rotateY(25deg) rotateX(90deg);
+	transform: rotateY(25deg) rotateX(90deg);
+}
+
+#iphoneShadow {
+	margin-left:auto;
+	margin-right:auto;
+	width:500px;
+	height:450px;
+	display:block;
+	background: -webkit-radial-gradient(center, ellipse cover, rgba(0,0,0,0.2) 0%,rgba(0,0,0,0) 50%);
+	background: -moz-radial-gradient(center, ellipse cover, rgba(0,0,0,0.2) 0%,rgba(0,0,0,0) 50%);
+	background: -o-radial-gradient(center, ellipse cover, rgba(0,0,0,0.2) 0%,rgba(0,0,0,0) 50%);
+	background: -ms-radial-gradient(center, ellipse cover, rgba(0,0,0,0.2) 0%,rgba(0,0,0,0) 50%);
+	background: radial-gradient(center, ellipse cover, rgba(0,0,0,0.2) 0%,rgba(0,0,0,0) 50%);
+}
