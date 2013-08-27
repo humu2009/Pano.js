@@ -414,7 +414,9 @@ var Pano = Pano || {};
 		load: function(url, reset) {
 			// cancel downloading of the previous image if any
 			if (this.is_loading) {
-				this.img.abort();
+				this.img.onload = this.img.onabort = this.img.onerror = null;
+				this.img.src = '';
+				this.img = null;
 				this.is_loading = false;
 			}
 
