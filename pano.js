@@ -267,6 +267,7 @@ var Pano = Pano || {};
 				}
 			}
 			evt.preventDefault();
+			evt.stopPropagation();
 		});
 
 		this.saved_canvas_pos = null;
@@ -467,7 +468,10 @@ var Pano = Pano || {};
 		yaw: function(degs) {
 			var newHeading = this.cam_heading + degs;
 			if (Math.abs(newHeading - this.cam_heading) > 0) {
-				this.cam_heading = newHeading;
+				if (this.inertial_move == 'on')
+					this.inert_heading_step = newHeading - this.cam_heading;
+				else
+					this.cam_heading = newHeading;
 				this.update();
 			}
 		}, 
@@ -483,7 +487,10 @@ var Pano = Pano || {};
 		zoom: function(degs) {
 			var newFov = clamp(this.cam_fov + degs, 30, 90);
 			if (Math.abs(newFov - this.cam_fov) > 0) {
-				this.cam_fov = newFov;
+				if (this.inertial_move == 'on')
+					this.inert_fov_step = newFov - this.cam_fov;
+				else
+					this.cam_fov = newFov;
 				this.update();
 			}
 		}, 
@@ -1664,4 +1671,3 @@ TWEEN.Interpolation = {
 	}
 
 };
-
