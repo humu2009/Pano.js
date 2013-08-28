@@ -534,7 +534,7 @@ var Pano = Pano || {};
 			tween.onComplete(function() {
 				self.is_navigating = false;
 				if (callbackOnArrival && (typeof callbackOnArrival) == 'function')
-					callbackOnArrival.call(null);
+					callbackOnArrival.call(null, self);
 			});
 			tween.start();
 
@@ -964,7 +964,7 @@ var Pano = Pano || {};
 
 			// convert the result back to euler angles
 			var angles = quatToEuler(k0*x0 + k1*x1, k0*y0 + k1*y1, k0*z0 + k1*z1, k0*w0 + k1*w1);
-			var fov = k0 * this.fov0 + k1 * this.fov1;
+			var fov = (1 - fraction) * this.fov0 + fraction * this.fov1;
 
 			return {heading: angles[0], pitch: angles[1], fov: fov};
 		}
