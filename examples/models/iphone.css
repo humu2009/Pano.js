@@ -54,14 +54,14 @@
 
 #headerBox h1 {
 	color:white;
-	font-family: arial;
-	font-size: 18px;
+	font-family: Cambria, arial;
+	font-size: 20px;
 }
 
 #headerBox p {
 	float:left;
 	color:white;
-	font-family: arial;
+	font-family: Cambria, arial;
 	font-size: 12px;
 }
 
