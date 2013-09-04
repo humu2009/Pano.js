@@ -332,7 +332,7 @@ var Pano = Pano || {};
 					has_next_frame = inertial_yaw();
 					has_next_frame = inertial_zoom() || has_next_frame;
 				}
-				self.draw();
+				self._draw();
 				self.dirty = has_next_frame;
 				
 			}
@@ -341,7 +341,7 @@ var Pano = Pano || {};
 				self.idle = true;
 				// draw a new frame with texture filtering on
 				if (!self.is_webgl_enabled && self.image_filtering == 'on-idle')
-					self.draw();
+					self._draw();
 			}
 			setTimeout(tick, 30);
 		};
@@ -541,6 +541,34 @@ var Pano = Pano || {};
 			this.is_navigating = true;
 		}, 
 
+		playTour: function(path) {
+			if (path.length == 0)
+				return;
+			
+			var self = this;
+			var navigateToNode = function(index) {
+				var node = path[index];
+				self.navigateTo( node.heading, node.pitch, node.fov, node.duration, 
+								 (index + 1 == path.length) ? // already reaches the end of the tour?
+									node.onArrival :
+									function() {
+										// invoke the callback of the current node, if any
+										if (node.onArrival && (typeof node.onArrival) == 'function')
+											node.onArrival.call(null, self);
+										// then continue to next node
+										if (node.hoverTime > 0)
+											setTimeout(function() {
+												navigateToNode(index + 1);
+											}, node.hoverTime);
+										else
+											navigateToNode(index + 1);
+									}
+				);
+			};
+			// start tour
+			navigateToNode(0);
+		}, 
+
 		maximize: function() {
 			if (!this.saved_canvas_pos) {
 				// save current size and position of the canvas
@@ -592,7 +620,7 @@ var Pano = Pano || {};
 			this.dirty = true;
 		}, 
 
-		draw: function() {
+		_draw: function() {
 			// Adjust canvas's logical size to be the same as its inner size in pixels. 
 			// This is necessary for canvas may have been resized.
 			if (this.canvas.width != this.canvas.clientWidth)
@@ -610,7 +638,7 @@ var Pano = Pano || {};
 			var pitch = this.cam_pitch;
 			var fov = this.cam_fov;
 			var camPlane = this.cam_plane;
-			var ratioUp = 2.0 * Math.tan(0.5 * fov * DEG2RAD);
+			var ratioUp = 2 * Math.tan(0.5 * fov * DEG2RAD);
 			var ratioRight = this.canvas.width * ratioUp / this.canvas.height;
 			camPlane.dir[0]    = Math.sin(pitch * DEG2RAD) * Math.sin(heading * DEG2RAD);
 			camPlane.dir[1]    = Math.cos(pitch * DEG2RAD);
