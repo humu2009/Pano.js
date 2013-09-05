@@ -37,12 +37,53 @@ var Pano = Pano || {};
 	var is_canvas_available = window.HTMLCanvasElement != undefined;
 	var is_webgl_available = window.WebGLRenderingContext != undefined;
 	var is_firefox = /Firefox[\/\s]\d+(?:.\d+)*/.exec(window.navigator.userAgent) != null;
+	var is_opera = /Opera[\/\s](\d+(?:.\d+)*)/.exec(window.navigator.userAgent) != null;
 
 	var requestAnimationFrame = window.requestAnimationFrame || function(callback) {
 		setTimeout(callback, 17);
 	};
 
+	var new_label_id = 0;
+	var label_layer_style = null;
+	var default_label_style = null;
+
 	var util_canvas = null;
+
+	var label_style_template =	'.label-frame { \n' + 
+								'	position:absolute; \n' + 
+								'	width:200px; \n' + 
+								'	padding:8px; \n' + 
+								'	border:3px solid #5a8f00; \n' + 
+								'	font:1em/1.4 Cambria, Georgia, sans-serif; \n' + 
+								'	color:#333; \n' + 
+								'	background:#fff; \n' + 
+								'	text-align:left; \n' + 
+								'	-webkit-border-radius:10px; \n' + 
+								'	-moz-border-radius:10px; \n' + 
+								'	-o-border-radius:10px; \n' + 
+								'	-ms-border-radius:10px; \n' + 
+								'	border-radius:10px; \n' + 
+								'	-webkit-user-select:none; \n' + 
+								'	-moz-user-select:none; \n' + 
+								'	-o-user-select:none; \n' + 
+								'	-ms-user-select:none; \n' + 
+								'	user-select:none; \n' + 
+								'	pointer-events:none; \n' + 
+								'}';
+
+	var label_layer_style_template =	'.label-layer { \n' + 
+										'	position:absolute; \n' + 
+										'	overflow:hidden; \n' + 
+										'	pointer-events:none; \n' + 
+										'}\n' + 
+										/*
+										 *	For Opera 9.x ~ 12.x which does not support CSS pointer-events. 
+										 *	See http://caniuse.com/pointer-events and
+										 *	http://www.opera.com/docs/specs/presto2.12/css/o-vendor/.
+										 */
+										'x:-o-prefocus, .label-layer { \n' + 
+										'	visibility: hidden; \n' + 
+										'}';
 
 	var vert_shader =	'#ifdef GL_ES \n' + 
 						'	precision mediump float; \n' + 
@@ -101,6 +142,33 @@ var Pano = Pano || {};
 		return [heading, pitch+90];
 	}
 
+	function intersectRects(r0, r1) {
+		var left   = Math.max(r0.left, r1.left);
+		var top    = Math.max(r0.top, r1.top);
+		var right  = Math.min(r0.right, r1.right);
+		var bottom = Math.min(r0.bottom, r1.bottom);
+		return {
+			left:   left, 
+			top:    top, 
+			right:  right, 
+			bottom: bottom, 
+			width:  right-left, 
+			height: bottom-top
+		};
+	}
+
+	function isPowerOfTwo(n) {
+		return (n & (n - 1)) == 0;
+	}
+
+	function addCSSStyle(template) {
+		var cssStyle = document.createElement('style');
+		cssStyle.type = 'text/css';
+		cssStyle.innerHTML = template;
+		document.getElementsByTagName('head')[0].appendChild(cssStyle);
+		return cssStyle;
+	}
+
 	function getUtilCanvas() {
 		return util_canvas ? util_canvas : (util_canvas = document.createElement('canvas'));
 	}
@@ -148,10 +216,6 @@ var Pano = Pano || {};
 		return program;
 	}
 
-	function isPowerOfTwo(n) {
-		return (n & (n - 1)) == 0;
-	}
-
 
 	/**
 		@class View
@@ -169,6 +233,9 @@ var Pano = Pano || {};
 		this.img = null;
 		this.is_loading = false;
 		this.is_loaded = false;
+
+		this.labels = [];
+		this.label_layer = null;
 
 		var forceWebGLRendering = false;
 		var forceSoftwareRendering = false;
@@ -269,6 +336,10 @@ var Pano = Pano || {};
 			evt.preventDefault();
 			evt.stopPropagation();
 		});
+		window.addEventListener('resize', function() {
+			self._repositionLabelLayer();
+			self.update();
+		});
 
 		this.saved_canvas_pos = null;
 
@@ -320,7 +391,7 @@ var Pano = Pano || {};
 
 		var tick = function() {
 			if (self.is_navigating) {
-				// update the tweening engine to perform navigating animations
+				// update the tweening engine to perform navigation animations
 				TWEEN.update();
 			}
 			if (self.dirty) {
@@ -333,6 +404,7 @@ var Pano = Pano || {};
 					has_next_frame = inertial_zoom() || has_next_frame;
 				}
 				self._draw();
+				self._layout();
 				self.dirty = has_next_frame;
 				
 			}
@@ -432,6 +504,7 @@ var Pano = Pano || {};
 					self.cam_pitch = self.init_pitch;
 					self.cam_fov = self.init_fov;
 				}
+				self._destroyLabels();
 				if (self.on_load_handler)
 					self.on_load_handler.call(null, self);
 				self.renderer.setImage(this);
@@ -569,6 +642,119 @@ var Pano = Pano || {};
 			navigateToNode(0);
 		}, 
 
+		addLabel: function(innertHTML, heading, pitch, isInteractive, frameOptions, callbackOnLayout) {
+			if (!default_label_style)
+				default_label_style = addCSSStyle(label_style_template);
+
+			if (!this.label_layer) {
+				if (!label_layer_style)
+					label_layer_style = addCSSStyle(label_layer_style_template);
+
+				var canvasRect = this.canvas.getBoundingClientRect();
+				this.label_layer = document.createElement('div');
+				this.label_layer.className = 'label-layer';
+				this.label_layer.style.left = canvasRect.left + 'px';
+				this.label_layer.style.top  = canvasRect.top  + 'px';
+				this.label_layer.style.width  = canvasRect.width + 'px';
+				this.label_layer.style.height = canvasRect.height + 'px';
+				document.body.appendChild(this.label_layer);
+			}
+
+			var isEnclosedByTag = /^\s*<([a-z][a-z0-9]*)(?:(?:\s+[^<>]*>)|>).*<\/\1>\s*$/.test(innertHTML.replace(/\n/g, ''));
+
+			var container = document.createElement('div');
+			container.innerHTML = innertHTML;
+			if (!isEnclosedByTag || frameOptions) {
+				container.className = 'label-frame';
+				if (frameOptions) {
+					if (frameOptions.width)
+						container.style.width = frameOptions.width;
+					if (frameOptions.foregroundColor)
+						container.style.color = frameOptions.foregroundColor;
+					if (frameOptions.backgroundColor)
+						container.style.backgroundColor = frameOptions.backgroundColor;
+					if (frameOptions.textAlign)
+						container.style.textAlign = frameOptions.textAlign;
+					if (frameOptions.borderWidth)
+						container.style.borderWidth = frameOptions.borderWidth;
+					if (frameOptions.borderColor)
+						container.style.borderColor = frameOptions.borderColor;
+				}
+			}
+			else {
+				container.style.position = 'absolute';
+			}
+			if (isInteractive)
+				container.style.pointerEvents = 'auto';
+			container.style.visibility = 'hidden';
+			container.id = 'lb-' + ++new_label_id;
+			this.label_layer.appendChild(container);
+
+			this.labels.push({
+				element: container, 
+				heading: heading, 
+				pitch:   pitch, 
+				onLayout: (typeof callbackOnLayout) == 'function' ? callbackOnLayout : null
+			});
+			this.update();
+
+			return container.id;
+		}, 
+
+		eulerToView: function(heading, pitch) {
+			var dir    = this.cam_plane.dir;
+			var up     = this.cam_plane.up;
+			var right  = this.cam_plane.right;
+			var origin = this.cam_plane.origin;
+
+			// create a ray from the given angles
+			var rayX = Math.sin(pitch * DEG2RAD) * Math.sin(heading * DEG2RAD);
+			var rayY = Math.cos(pitch * DEG2RAD);
+			var rayZ = Math.sin(pitch * DEG2RAD) * Math.cos(heading * DEG2RAD);
+			// calculate dot product of the ray and the look-at vector of current camera plane
+			var t = rayX * dir[0] + rayY * dir[1] + rayZ * dir[2];
+			// no intersection?
+			if (t <= 0)
+				return null;
+
+			t = 1 / t;
+			// calculate the vector from the origin of the camera plane to the intersection point
+			var dx = t * rayX - origin[0];
+			var dy = t * rayY - origin[1];
+			var dz = t * rayZ - origin[2];
+
+			var ratioUp = 2 * Math.tan(0.5 * this.cam_fov * DEG2RAD);
+			var ratioRight = this.canvas.width * ratioUp / this.canvas.height;
+
+			// project the vector onto the up and the right vectors of the camera plane to calculate
+			// fractions on both directions
+			var fractUp    = -(dx * up[0] + dy * up[1] + dz * up[2]) / (ratioUp * ratioUp);
+			var fractRight =  (dx * right[0] + dy * right[1] + dz * right[2]) / (ratioRight * ratioRight);
+
+			return [Math.floor(0.5 + fractRight * this.canvas.width), Math.floor(0.5 + fractUp * this.canvas.height)];
+		}, 
+
+		viewToEuler: function(x, y) {
+			var dir    = this.cam_plane.dir;
+			var up     = this.cam_plane.up;
+			var right  = this.cam_plane.right;
+			var origin = this.cam_plane.origin;
+
+			var fractUp = y / this.canvas.height;
+			var fractRight = x / this.canvas.width;
+
+			// create a ray from the given coordinate
+			var rayX = origin[0] + right[0] * fractRight - up[0] * fractUp;
+			var rayY = origin[1] + right[1] * fractRight - up[1] * fractUp;
+			var rayZ = origin[2] + right[2] * fractRight - up[2] * fractUp;
+
+			// calculate angles from the ray
+			var heading = 0.5 * Math.PI - Math.atan2(rayZ, rayX);
+			var pitch   = Math.acos(rayY / Math.sqrt(rayX*rayX + rayY*rayY + rayZ*rayZ));
+
+			return [RAD2DEG * heading, RAD2DEG * pitch];
+		}, 
+
 		maximize: function() {
 			if (!this.saved_canvas_pos) {
 				// save current size and position of the canvas
@@ -591,6 +777,12 @@ var Pano = Pano || {};
 				this.canvas.style.width		= '100%';
 				this.canvas.style.height	= '100%';
 
+				// also reposition the label layer
+				if (this.label_layer) {
+					this._repositionLabelLayer();
+					this.label_layer.style.zIndex = '1025';
+				}
+
 				// redraw with the new size
 				this.update();
 			}
@@ -610,6 +802,12 @@ var Pano = Pano || {};
 
 				// remove the saved canvas state
 				this.saved_canvas_pos = null;
+
+				// restore size and position of the label layer
+				if (this.label_layer) {
+					this._repositionLabelLayer();
+					this.label_layer.style.zIndex = '';
+				}
 
 				// redraw with the new size
 				this.update();
@@ -661,6 +859,51 @@ var Pano = Pano || {};
 
 			if (this.exit_frame_handler)
 				this.exit_frame_handler.call(null, this, this.canvas.width, this.canvas.height);
+		}, 
+
+		_layout: function() {
+			var canvasRect = this.canvas.getBoundingClientRect();
+			for (var i=0; i<this.labels.length; i++) {
+				var label = this.labels[i];
+				var coordOnCanvas = this.eulerToView(label.heading, label.pitch);
+				if (!coordOnCanvas)
+					label.element.style.visibility = 'hidden';
+				else {
+					if (label.onLayout)
+						label.onLayout.call(null, this, label.element, coordOnCanvas[0], coordOnCanvas[1]);
+					else {
+						label.element.style.left = coordOnCanvas[0] + 'px';
+						label.element.style.top  = coordOnCanvas[1] + 'px';
+					}
+					var labelRect = label.element.getBoundingClientRect();
+					var clipRect = intersectRects(labelRect, canvasRect);
+					if (clipRect.width > 0 && clipRect.height > 0)
+						label.element.style.visibility = 'visible';
+					else
+						label.element.style.visibility = 'hidden';
+				}
+			}
+		}, 
+
+		_repositionLabelLayer: function() {
+			if (this.label_layer) {
+				var layerRect  = this.label_layer.getBoundingClientRect();
+				var canvasRect = this.canvas.getBoundingClientRect();
+				if ( layerRect.left != canvasRect.left || layerRect.top != canvasRect.top || 
+					 layerRect.width != canvasRect.width || layerRect.height != canvasRect.height ) {
+					this.label_layer.style.left = window.pageXOffset + canvasRect.left + 'px';
+					this.label_layer.style.top  = window.pageYOffset + canvasRect.top  + 'px';
+					this.label_layer.style.width  = canvasRect.width  + 'px';
+					this.label_layer.style.height = canvasRect.height + 'px';
+				}
+			}
+		}, 
+
+		_destroyLabels: function() {
+			for (var i=this.labels.length-1; i>=0; i--) {
+				this.label_layer.removeChild(this.labels[i].element);
+			}
+			this.labels.length = 0;
 		}
 
 	};
