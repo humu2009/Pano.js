@@ -1,0 +1,75 @@
+<!DOCTYPE html public "-//W3C//DTD HTML 5.0 Transitional//EN">
+<html>
+	<head>
+		<title> Pano.js - Labeling Example </title>
+		<meta name="Author" content="Pano.js">
+	</head>
+
+	<body>
+		<div id="mainframe" style="width:720px; height:540px; margin:auto; position:relative;">
+			<canvas id="pano-cv" width="720" height="540" style="background:#666; border: 1px solid;"></canvas>
+			<a id="toggle-maximize" style="position:absolute; left:675px; top:10px; width:36px; height:26px; cursor:pointer; z-index:1026; background: url(./resource/maximize.png);" onclick="toggleMaximize();"></a>
+		</div style="width:720px; margin:auto; position:relative;">
+		<div style="width:720px; margin:auto; position:relative;">
+			<p style="font-family:Cambria,Arial,sans-serif;">The night view of <i>Luza square</i> in <i>Dubrovnik</i>. Picture by <a href="http://www.flickr.com/photos/gadl/"><strong><i>Alexandre Duret-Lutz</i></strong></a>, under a Creative Commons license. Some rights reserved.</p>
+		</div>
+		<script type="text/javascript" src="js/pano.js"></script>
+		<script type="text/javascript" src="js/spin.js"></script>
+		<script type="text/javascript" src="jsl/stats.js"></script>
+		<script type="text/javascript">
+			var view = new Pano.View('pano-cv', {image: 'panoramas/dubrovnik-night.jpg'});
+
+			/*
+			 *	Create a spinning animation which will be displayed when image is in loading.
+			 */
+			var spinner = new Spinner({color: '#fff', lines: 12}).spin(document.getElementById('spinner'));
+			view.onAbort = view.onError = function() {
+				spinner.stop();
+			};
+
+			/*
+			 *	Add in labels when loading is done.
+			 */
+			view.onLoad = function() {
+				spinner.stop();
+				view.addLabel('<a href="http://www.flickr.com/photos/64529076@N03/5882571696/in/photolist-9XPHBW-9xvR56-9ScV5T-9ScCyg-9ScuWT-9SfNQY-eaBkWX-9WoS7d-bWt5gF-98yqTA-amg7oN-djUiFA-ehzEdd-czqVDJ-9WvMyQ-9Wt4mT-8n9PGY-cVtffU-7JGScH-aw7mtq-aw7kuY-cdVhum-916Tog-8wzLWv-9xhb6T-9BxyiF-a52GZ4-8wRwVe-8FCbZA-e7NQSF-9xhbBP-9xJqZY-9xhbrZ-byRMPA-ff1fGE-ai8RB2-b9Ft9Z-aDRaw1-aXPRAi-djUgC5-bqHfPv-dvp8gM-f3xbRw-a2MGVd-8XJiaX-ai8KXk-7BmPxf-7BmQL7-dVFCXo-8tz512-bBedxN" target="_blank"><img src="./resource/camera.png" width=24 height=24 title="Orlando Column" style="cursor:pointer; border:0px;"></img></a>', 195.8, 71.0, true);
+				view.addLabel('<a href="http://www.flickr.com/photos/65272288@N00/2850433749/in/photolist-5kTdDt-5mtSnU-5rzEBe-5rzFin-5rDZXb-5rE1gW-5YsUjm-6fxm4g-6fxm5H-6fxm8a-6fxm9z-6fxmbg-6fxmdD-6fxmfe-6fxmm4-6fxmnx-6fxmoV-6fxmG4-6fxmHH-6fxmKi-6fBwrj-6fBwv3-6fBwww-6fBwxW-6fBwDE-6fBwFm-6fBwGN-6fBwJ3-6fBwKS-6fBwMq-6fBwNC-6fBwSh-6fBwTu-6fBwUA-6fBx11-7jrJ2K-9rQuaQ-9ze2nt-ehzEdd-7VJsbH-byQq5q-8ZN5wX" target="_blank"><img src="./resource/camera.png" width=24 height=24 title="St. Blasius Church" style="cursor:pointer; border:0px;"></img></a>', 242.4, 66.7, true);
+				view.addLabel('<a href="http://www.flickr.com/photos/52848745@N05/5252002559/in/photolist-916Tog-dVAePz-eVdQyU-8ZN5xi-e3EyTX-8MKKWU-8wymuy-8GWwYc-7CpiR3-dApBC5-doyhyZ-8yrtN8-cqgmCw-bBemTs-acALLJ-f3hTAe-f3xapY-e3WUbV-9B6g3v-bKRbFg-bKRdye-cFne2C-7CphnG-b4dEgX-b4dFdV-b4dFs4-f3i3we-cUAReG-8wyRbx-8wyQce-adPrDZ-8ZqsFh-apJkuB-czqXzA-czqVq5-cGvTMA-czqVuY-bwWiRy-bwWtAJ-bKRevr-dhFcQf-87Zvc4-8nawAu-9xPoCT-dMnh8C-cTYxvS-8ZnoZv-cpYJJQ-bMpwvM-d56Ck9-8V77j6" target="_blank"><img src="./resource/camera.png" width=24 height=24 title="Bell Tower" style="cursor:pointer; border:0px;"></img></a>', 333.8, 44.0, true);
+				view.addLabel('<a href="http://www.flickr.com/photos/70033309@N02/9134916996/in/photolist-eVdQyU-8ZN5xi-e3EyTX-8MKKWU-8wymuy-8GWwYc-7CpiR3-dApBC5-doyhyZ-8yrtN8-cqgmCw-bBemTs-acALLJ-f3hTAe-f3xapY-e3WUbV-9B6g3v-bKRbFg-bKRdye-cFne2C-7CphnG-b4dEgX-b4dFdV-b4dFs4-f3i3we-cUAReG-8wyRbx-8wyQce-adPrDZ-8ZqsFh-apJkuB-czqXzA-czqVq5-cGvTMA-czqVuY-bwWiRy-bwWtAJ-bKRevr-dhFcQf-87Zvc4-8nawAu-9xPoCT-dMnh8C-cTYxvS-8ZnoZv-cpYJJQ-bMpwvM-d56Ck9-8V77j6-98QBN6-8wvnTH" target="_blank"><img src="./resource/camera.png" width=24 height=24 title="Stradun Street" style="cursor:pointer; border:0px;"></img></a>', 151.0, 87.0, true);
+			};
+
+			/*
+			 *	Create a statistic panel to display FPS info.
+			 */
+			var stats = new Stats;
+			stats.setMode(0);
+			stats.domElement.style.position = 'absolute';
+			stats.domElement.style.left = '5px';
+			stats.domElement.style.top = '5px';
+			document.getElementById('mainframe').appendChild(stats.domElement);
+			// collect FPS info by setting up the onEnterFrame and onExitFrame event handlers
+			view.onEnterFrame = function() {
+				stats.begin();
+			};
+			view.onExitFrame = function() {
+				stats.end();
+			};
+
+			function toggleMaximize() {
+				var button = document.getElementById('toggle-maximize');
+				if (view.isMaximized) {
+					view.restore();
+					button.style.left = '675px';
+					button.style.position = 'absolute';
+					button.style.background = 'url(./resource/maximize.png)';
+				}
+				else {
+					view.maximize();
+					button.style.left = (view.domElement.clientWidth - 45) + 'px';
+					button.style.position = 'fixed';
+					button.style.background = 'url(./resource/restore.png)';
+				}
+			}
+		</script>
+	</body>
+</html>
