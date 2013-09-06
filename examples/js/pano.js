@@ -781,6 +781,7 @@ var Pano = Pano || {};
 				if (this.label_layer) {
 					this._repositionLabelLayer();
 					this.label_layer.style.zIndex = '1025';
+					this.label_layer.style.position = 'fixed';
 				}
 
 				// redraw with the new size
@@ -807,6 +808,7 @@ var Pano = Pano || {};
 				if (this.label_layer) {
 					this._repositionLabelLayer();
 					this.label_layer.style.zIndex = '';
+					this.label_layer.style.position = 'absolute';
 				}
 
 				// redraw with the new size
