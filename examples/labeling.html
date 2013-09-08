@@ -8,31 +8,74 @@
 	<body>
 		<div id="mainframe" style="width:720px; height:540px; margin:auto; position:relative;">
 			<canvas id="pano-cv" width="720" height="540" style="background:#666 url(./images/square-cover.jpg) no-repeat; background-size:100% 100%; border: 1px solid;"></canvas>
-			<div id="spinner" style="position:absolute; left:360px; top:270px;"></div>
+			<div id="loading" style="position:absolute; left:310px; top:220px; z-index:1025;"></div>
 			<a id="toggle-maximize" style="position:absolute; left:675px; top:10px; width:36px; height:26px; cursor:pointer; z-index:1026; background: url(./resource/maximize.png);" onclick="toggleMaximize();"></a>
 		</div style="width:720px; margin:auto; position:relative;">
 		<div style="width:720px; margin:auto; position:relative;">
 			<p style="font-family:Cambria,Arial,sans-serif;">The night view of <b><i>Luza square</i></b> in <b><i>Dubrovnik</i></b>. The great picture is released by <a href="https://www.facebook.com/demiguel.art"><strong><i>Juan Pablo de Miguel</i></strong></a>, and used in this project with a special permission from the author. All rights reserved.</p>
 		</div>
 		<script type="text/javascript" src="../pano.js"></script>
-		<script type="text/javascript" src="../external/spin.js"></script>
+		<script type="text/javascript" src="../external/sonic.js"></script>
 		<script type="text/javascript" src="../external/stats.js"></script>
 		<script type="text/javascript">
 			var view = new Pano.View('pano-cv', {image: 'panoramas/dubrovnik-night.jpg'});
 
 			/*
-			 *	Create a spinning animation which will be displayed when image is in loading.
+			 *	Create a sonic animation that will be displayed in loading.
 			 */
-			var spinner = new Spinner({color: '#fff', lines: 12}).spin(document.getElementById('spinner'));
-			view.onAbort = view.onError = function() {
-				spinner.stop();
-			};
+			var sonic = new Sonic({
+				width: 100, 
+				height: 100, 
+				stepsPerFrame: 4, 
+				trailLength: 1, 
+				pointDistance: .01, 
+				fps: 25, 
+				fillColor: '#ff7b24', 
+				setup: function() {
+					this._.lineWidth = 10;
+				}, 
+				step: function(point, i, f) {
+					var progress = point.progress,
+						degAngle = 360 * progress,
+						angle = Math.PI/180 * degAngle,
+						angleB = Math.PI/180 * (degAngle - 180),
+						size = i*5;
+					this._.fillRect(
+						Math.cos(angle) * 25 + (50-size/2),
+						Math.sin(angle) * 15 + (50-size/2),
+						size,
+						size
+					);
+					this._.fillStyle = '#63d3ff';
+					this._.fillRect(
+						Math.cos(angleB) * 15 + (50-size/2),
+						Math.sin(angleB) * 25 + (50-size/2),
+						size,
+						size
+					);
+					if (point.progress == 1) {
+						this._.globalAlpha = f < .5 ? 1-f : f;
+						this._.fillStyle = '#eee';
+						this._.beginPath();
+						this._.arc(50, 50, 5, 0, 360, 0);
+						this._.closePath();
+						this._.fill();
+					}
+				}, 
+				path: [
+					['line', 40, 10, 60, 90]
+				]
+			});
+			sonic.play();
+			document.getElementById('loading').appendChild(sonic.canvas);
 
 			/*
-			 *	Add in our labels when loading is done.
+			 *	Stop animation and add in our labels when loading is done.
 			 */
 			view.onLoad = function() {
-				spinner.stop();
+				sonic.stop();
+				document.getElementById('loading').style.display = 'none';
+
 				view.addLabel('<a href="http://www.flickr.com/photos/64529076@N03/5882571696/in/photolist-9XPHBW-9xvR56-9ScV5T-9ScCyg-9ScuWT-9SfNQY-eaBkWX-9WoS7d-bWt5gF-98yqTA-amg7oN-djUiFA-ehzEdd-czqVDJ-9WvMyQ-9Wt4mT-8n9PGY-cVtffU-7JGScH-aw7mtq-aw7kuY-cdVhum-916Tog-8wzLWv-9xhb6T-9BxyiF-a52GZ4-8wRwVe-8FCbZA-e7NQSF-9xhbBP-9xJqZY-9xhbrZ-byRMPA-ff1fGE-ai8RB2-b9Ft9Z-aDRaw1-aXPRAi-djUgC5-bqHfPv-dvp8gM-f3xbRw-a2MGVd-8XJiaX-ai8KXk-7BmPxf-7BmQL7-dVFCXo-8tz512-bBedxN" target="_blank"><img src="./resource/camera.png" width=24 height=24 title="Orlando Column" style="cursor:pointer; border:0px;"></img></a>', 195.8, 71.0, true);
 				view.addLabel('<a href="http://www.flickr.com/photos/65272288@N00/2850433749/in/photolist-5kTdDt-5mtSnU-5rzEBe-5rzFin-5rDZXb-5rE1gW-5YsUjm-6fxm4g-6fxm5H-6fxm8a-6fxm9z-6fxmbg-6fxmdD-6fxmfe-6fxmm4-6fxmnx-6fxmoV-6fxmG4-6fxmHH-6fxmKi-6fBwrj-6fBwv3-6fBwww-6fBwxW-6fBwDE-6fBwFm-6fBwGN-6fBwJ3-6fBwKS-6fBwMq-6fBwNC-6fBwSh-6fBwTu-6fBwUA-6fBx11-7jrJ2K-9rQuaQ-9ze2nt-ehzEdd-7VJsbH-byQq5q-8ZN5wX" target="_blank"><img src="./resource/camera.png" width=24 height=24 title="St. Blasius Church" style="cursor:pointer; border:0px;"></img></a>', 242.4, 66.7, true);
 				view.addLabel('<a href="http://www.flickr.com/photos/25326534@N05/8492697367/in/photolist-dWti3F-dWthVi-dWz545-dWtuqD-dWtudF-dWyWnG-dWz863-dWtu3z-dWz5uG-dWz5K3-arDT13-fc6hfw-d5qfH9-9Wz1y4-9WBPUC-9WyWSa-9WyWj4-9WBRz5-9WBNds-9WBQwY-9WBR3m-9WBVmY-9Wz7Ai-9Wz88K-9WBS9A-9WBUpd-9WBTQf-9Wz5qK-9Wz8Gr-9Wz14g-8wUxGS-8wYDqW-8wRuJ6" target="_blank"><img src="./resource/camera.png" width=24 height=24 title="Pred Dvorom Street" style="cursor:pointer; border:0px;"></img></a>', 260.2, 85.3, true);
