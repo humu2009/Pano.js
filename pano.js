@@ -497,14 +497,16 @@ var Pano = Pano || {};
 			this.img = new Image;
 			this.img.onload = function() {
 				self.img = null;	// do not cache the image object in view instance
-				self.is_loading = false;
-				self.is_loaded = true;
 				if (reset || reset == undefined) {
 					self.cam_heading = self.init_heading;
 					self.cam_pitch = self.init_pitch;
 					self.cam_fov = self.init_fov;
 				}
-				self._destroyLabels();
+				if (self.is_loaded) {
+					self._destroyLabels();
+				}
+				self.is_loading = false;
+				self.is_loaded = true;
 				if (self.on_load_handler)
 					self.on_load_handler.call(null, self);
 				self.renderer.setImage(this);
