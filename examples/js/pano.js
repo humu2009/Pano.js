@@ -85,31 +85,52 @@ var Pano = Pano || {};
 										'	visibility: hidden; \n' + 
 										'}';
 
-	var vert_shader =	'#ifdef GL_ES \n' + 
-						'	precision mediump float; \n' + 
-						'#endif	\n' + 
-						'attribute vec2 a_position; \n' + 
-						'varying vec2 v_fraction; \n' + 
-						'void main(void) { \n' + 
-						'	v_fraction = vec2(0.5, -0.5) * a_position + vec2(0.5, 0.5); \n' + 
-						'	gl_Position = vec4(a_position, 0.0, 1.0); \n' + 
-						'}';
-	var frag_shader =	'#ifdef GL_ES \n' + 
-						'	precision mediump float; \n' + 
-						'#endif	\n' + 
-						'#define PI 3.1415927 \n' + 
-						'uniform vec3 u_camUp; \n' + 
-						'uniform vec3 u_camRight; \n' + 
-						'uniform vec3 u_camPlaneOrigin; \n' + 
-						'uniform sampler2D s_texture; \n' + 
-						'varying vec2 v_fraction; \n' + 
-						'void main(void) { \n' + 
-						'	vec3 ray = u_camPlaneOrigin + v_fraction.x * u_camRight - v_fraction.y * u_camUp; \n' + 
-						'	ray = normalize(ray); \n' + 
-						'	float theta = acos(ray.y) / PI; \n' + 
-						'	float phi = 0.5 * (atan(ray.z, ray.x) + PI) / PI; \n' + 
-						'	gl_FragColor = texture2D(s_texture, vec2(phi, theta)); \n' + 
-						'}';
+	var equirectangular_vs =	'#ifdef GL_ES \n' + 
+								'	precision mediump float; \n' + 
+								'#endif	\n' + 
+								'attribute vec2 a_position; \n' + 
+								'varying vec2 v_fraction; \n' + 
+								'void main(void) { \n' + 
+								'	v_fraction = vec2(0.5, -0.5) * a_position + vec2(0.5, 0.5); \n' + 
+								'	gl_Position = vec4(a_position, 0.0, 1.0); \n' + 
+								'}';
+	var equirectangular_fs =	'#ifdef GL_ES \n' + 
+								'	precision mediump float; \n' + 
+								'#endif	\n' + 
+								'#define PI 3.1415927 \n' + 
+								'uniform vec3 u_camUp; \n' + 
+								'uniform vec3 u_camRight; \n' + 
+								'uniform vec3 u_camPlaneOrigin; \n' + 
+								'uniform sampler2D s_texture; \n' + 
+								'varying vec2 v_fraction; \n' + 
+								'void main(void) { \n' + 
+								'	vec3 ray = u_camPlaneOrigin + v_fraction.x * u_camRight - v_fraction.y * u_camUp; \n' + 
+								'	ray = normalize(ray); \n' + 
+								'	float theta = acos(ray.y) / PI; \n' + 
+								'	float phi = 0.5 * (atan(ray.z, ray.x) + PI) / PI; \n' + 
+								'	gl_FragColor = texture2D(s_texture, vec2(phi, theta)); \n' + 
+								'}';
+
+	var sprite_vs =	'#ifdef GL_ES \n' + 
+					'	precision mediump float; \n' + 
+					'#endif	\n' + 
+					'uniform vec2 u_anchor; \n' + 
+					'uniform vec2 u_size; \n' + 
+					'attribute vec2 a_position; \n' + 
+					'varying vec2 v_texcoord; \n' + 
+					'void main(void) { \n' + 
+					'	v_texcoord = vec2(0.5, -0.5) * a_position + vec2(0.5, 0.5); \n' + 
+					'	gl_Position = vec4(u_anchor + u_size * a_position, 0.0, 1.0); \n' + 
+					'}';
+	var sprite_fs =	'#ifdef GL_ES \n' + 
+					'	precision mediump float; \n' + 
+					'#endif	\n' + 
+					'uniform float u_alpha; \n' + 
+					'uniform sampler2D s_texture; \n' + 
+					'varying vec2 v_texcoord; \n' + 
+					'void main(void) { \n' + 
+					'	gl_FragColor = u_alpha * texture2D(s_texture, v_texcoord);' + 
+					'}';
 
 	function clamp(val, min, max) {
 		return Math.max(min, Math.min(max, val));
@@ -169,8 +190,28 @@ var Pano = Pano || {};
 		return cssStyle;
 	}
 
-	function getUtilCanvas() {
-		return util_canvas ? util_canvas : (util_canvas = document.createElement('canvas'));
+	function getUtilCanvas(width, height, clear) {
+		var isClean = false;
+		if (!util_canvas) {
+			util_canvas = document.createElement('canvas');
+			isClean = true;
+		}
+
+		if (!util_canvas)
+			return null;
+
+		if (util_canvas.width != width || util_canvas.height != height) {
+			util_canvas.width = width;
+			util_canvas.height = height;
+			isClean = true;
+		}
+
+		if (!isClean && clear != false) {
+			var ctx = util_canvas.getContext('2d');
+			ctx.clearRect(0, 0, width, height);
+		}
+
+		return util_canvas;
 	}
 
 	function getWebGL(canvas) {
@@ -236,6 +277,9 @@ var Pano = Pano || {};
 
 		this.labels = [];
 		this.label_layer = null;
+
+		this.lensFlares = [];
+		this.flareImgs = {};
 
 		var forceWebGLRendering = false;
 		var forceSoftwareRendering = false;
@@ -404,7 +448,7 @@ var Pano = Pano || {};
 					has_next_frame = inertial_zoom() || has_next_frame;
 				}
 				self._draw();
-				self._layout();
+				self._layoutLabels();
 				self.dirty = has_next_frame;
 				
 			}
@@ -504,6 +548,9 @@ var Pano = Pano || {};
 				}
 				if (self.is_loaded) {
 					self._destroyLabels();
+					self.flareImgs = {};
+					self.lensFlares.length = 0;
+					self.renderer.init();
 				}
 				self.is_loading = false;
 				self.is_loaded = true;
@@ -703,6 +750,42 @@ var Pano = Pano || {};
 			return container.id;
 		}, 
 
+		addLensFlare: function(flareImgURLs, heading, pitch, range) {
+			range = range || 1;
+
+			var self = this;
+			var flares = [];
+			for (var i=0; i<flareImgURLs.length; i++) {
+				var url = flareImgURLs[i];
+				if (!(url in this.flareImgs)) {
+					var img = new Image;
+					img.onload = function() {
+						var flare = self.flareImgs[this.key];
+						flare.ready = true;
+						flare.renderId = self.renderer.addSpriteImage(this);
+					};
+					this.flareImgs[url] = {
+						img:   img, 
+						ready: false, 
+						renderId: -1
+					};
+					img.key = url;
+					img.src = url;
+				}
+				flares.push({
+					obj:  this.flareImgs[url], 
+					dist: (i + Math.random()) * range / flareImgURLs.length
+				});
+			}
+
+			this.lensFlares.push({
+				flares:  flares, 
+				heading: heading, 
+				pitch:   pitch, 
+				range:   range || 1
+			});
+		}, 
+
 		eulerToView: function(heading, pitch) {
 			var dir    = this.cam_plane.dir;
 			var up     = this.cam_plane.up;
@@ -833,6 +916,19 @@ var Pano = Pano || {};
 			if (this.enter_frame_handler)
 				this.enter_frame_handler.call(null, this, this.canvas.width, this.canvas.height);
 
+			this.renderer.beginFrame();
+			this._drawPanorama();
+			this._drawLensFlares();
+			this.renderer.endFrame();
+
+			// update timestamp
+			this.last_draw_ms = Date.now();
+
+			if (this.exit_frame_handler)
+				this.exit_frame_handler.call(null, this, this.canvas.width, this.canvas.height);
+		}, 
+
+		_drawPanorama: function() {
 			/*
 			 * Calculate current camera plane.
 			 */
@@ -856,16 +952,45 @@ var Pano = Pano || {};
 			camPlane.origin[2] = camPlane.dir[2] + 0.5 * camPlane.up[2] - 0.5 * camPlane.right[2];
 
 			// render panorama with current camera plane
-			this.renderer.render(camPlane.origin, camPlane.up, camPlane.right);
-
-			// update timestamp
-			this.last_draw_ms = Date.now();
-
-			if (this.exit_frame_handler)
-				this.exit_frame_handler.call(null, this, this.canvas.width, this.canvas.height);
+			this.renderer.renderEquirectangular(camPlane.origin, camPlane.up, camPlane.right);
 		}, 
 
-		_layout: function() {
+		_drawLensFlares: function() {
+			if (this.lensFlares.length == 0)
+				return;
+
+			var centerX = this.canvas.width >> 1;
+			var centerY = this.canvas.height >> 1;
+			var halfLenOfDiagonal = Math.sqrt(centerX * centerX + centerY * centerY);
+
+			this.renderer.begineSprite();
+			for (var i=0; i<this.lensFlares.length; i++) {
+				var lensFlare = this.lensFlares[i];
+				var lightPos = this.eulerToView(lensFlare.heading, lensFlare.pitch);
+				if (!lightPos)
+					continue;
+				if (lightPos[0] < 0 || lightPos[0] >= this.canvas.width || 
+					lightPos[1] < 0 || lightPos[1] >= this.canvas.height)
+					continue;
+
+				var dirX = centerX - lightPos[0];
+				var dirY = centerY - lightPos[1];
+				var l = Math.sqrt(dirX * dirX + dirY * dirY);
+				var flares = lensFlare.flares;
+				for (var j=0; j<flares.length; j++) {
+					var flare = flares[j];
+					if (flare.obj.ready) {
+						var x = lightPos[0] + 2 * lensFlare.range * flare.dist * dirX - 0.5 * flare.obj.img.width;
+						var y = lightPos[1] + 2 * lensFlare.range * flare.dist * dirY - 0.5 * flare.obj.img.height;
+						var alpha = 1 - l / halfLenOfDiagonal;
+						this.renderer.renderSprite(flare.obj.renderId, x, y, alpha);
+					}
+				}
+			}
+			this.renderer.endSprite();
+		}, 
+
+		_layoutLabels: function() {
 			var canvasRect = this.canvas.getBoundingClientRect();
 			for (var i=0; i<this.labels.length; i++) {
 				var label = this.labels[i];
@@ -926,25 +1051,24 @@ var Pano = Pano || {};
 		this.img_width = 0;
 		this.img_height = 0;
 		this.img_pixels = null;
+		this.spriteImgDatas = [];
 	}
 
 	Canvas2DRenderer.prototype = {
 
+		init: function() {
+			this.img_width = 0;
+			this.img_height = 0;
+			this.img_pixels = null;
+			this.spriteImgDatas.length = 0;
+		}, 
+
 		setImage: function(img) {
-			var cv = getUtilCanvas();
 			var w = img.width;
 			var h = img.height;
-
-			var isClean = false;
-			if (cv.width != w || cv.height != h) {
-				cv.width = w;
-				cv.height = h;
-				isClean = true;
-			}
+			var cv = getUtilCanvas(w, h);
 
 			var ctx = cv.getContext('2d');
-			if (!isClean)
-				ctx.clearRect(0, 0, w, h);
 			ctx.drawImage(img, 0, 0, w, h);
 			var imgData = ctx.getImageData(0, 0, w, h);
 			cv.width = 0;
@@ -955,24 +1079,43 @@ var Pano = Pano || {};
 			this.img_height = h;
 		}, 
 
-		render: function(origin, up, right) {
-			if (!this.ctx2d || !this.img_pixels)
-				return;
+		addSpriteImage: function(img) {
+			var w = img.width;
+			var h = img.height;
+			var cv = getUtilCanvas(w, h);
 
+			var ctx = cv.getContext('2d');
+			ctx.drawImage(img, 0, 0, w, h);
+			var imgData = ctx.getImageData(0, 0, w, h);
+
+			this.spriteImgDatas.push(imgData);
+			return this.spriteImgDatas.length;
+		}, 
+
+		beginFrame: function() {
 			// data buffer should be reallocated if canvas size has changed
 			if (this.canvas_width != this.canvas.width || this.canvas_height != this.canvas.height) {
 				this.canvas_width = this.canvas.width;
 				this.canvas_height = this.canvas.height;
 				this.canvas_data = null;
 			}
+			if (!this.canvas_data)
+				this.canvas_data = this.ctx2d.createImageData(this.canvas_width, this.canvas_height);
+		}, 
+
+		endFrame: function() {
+			this.ctx2d.putImageData(this.canvas_data, 0, 0);
+		}, 
+
+		renderEquirectangular: function(origin, up, right) {
+			if (!this.canvas_data || !this.img_pixels)
+				return;
 
 			var srcWidth = this.img_width;
 			var srcHeight = this.img_height;
 			var destWidth = this.canvas.width;
 			var destHeight = this.canvas.height;
 
-			if (!this.canvas_data)
-				this.canvas_data = this.ctx2d.createImageData(destWidth, destHeight);
 			var data = this.canvas_data.data;
 
 			var useBilinear = this.view.image_filtering == 'on' || (this.view.idle && this.view.image_filtering == 'on-idle');
@@ -1099,8 +1242,55 @@ var Pano = Pano || {};
 					phi0 = phi1;
 				} while (!isDone);
 			}
+		}, 
 
-			this.ctx2d.putImageData(this.canvas_data, 0, 0);
+		begineSprite: function() {
+		}, 
+
+		endSprite: function() {
+		}, 
+
+		renderSprite: function(renderId, x, y, alpha) {
+			if (!this.canvas_data || renderId < 1 || renderId > this.spriteImgDatas.length)
+				return;
+
+			var imgData = this.spriteImgDatas[renderId - 1];
+			var pixels = imgData.data;
+			var w = imgData.width;
+			var h = imgData.height;
+			x = Math.floor(0.5 + x);
+			y = Math.floor(0.5 + y);
+
+			alpha = Math.floor((alpha != undefined ? alpha : 1) * 256);
+
+			var destRect = intersectRects(	{left: 0, top: 0, right: this.canvas_width, bottom: this.canvas_height}, 
+											{left: x, top: y, right: x+w, bottom: y+h} );
+			if (destRect.width >0 && destRect.height > 0) {
+				var destLeft   = destRect.left;
+				var destTop    = destRect.top;
+				var destRight  = destRect.right;
+				var destBottom = destRect.bottom;
+				var srcLeft   = destLeft - x;
+				var srcTop    = destTop - y;
+				var srcRight  = srcLeft + destRect.width;
+				var srcBottom = srcTop + destRect.height;
+
+				var data = this.canvas_data.data;
+				for (var i=srcTop; i<srcBottom; i++) {
+					var src  = 4 * (i * w + srcLeft);
+					var dest = 4 * ((destTop + i - srcTop) * this.canvas_width + destLeft);
+					for (var j=srcLeft; j<srcRight; j++) {
+						var r = data[dest    ] + ((alpha * pixels[src    ]) >> 8);
+						var g = data[dest + 1] + ((alpha * pixels[src + 1]) >> 8);
+						var b = data[dest + 2] + ((alpha * pixels[src + 2]) >> 8);
+						data[dest    ] = r > 255 ? 255 : r;
+						data[dest + 1] = g > 255 ? 255 : g;
+						data[dest + 2] = b > 255 ? 255 : b;
+						src += 4;
+						dest += 4;
+					}
+				}
+			}
 		}
 
 	};
@@ -1115,14 +1305,23 @@ var Pano = Pano || {};
 		this.gl = getWebGL(view.canvas);
 		if (!this.gl)
 			throw 'Cannot get WebGL context';
-		this.program = null;
+		this.equirectangular_program = null;
+		this.sprite_program = null;
 		this.canvas_quad = null;
 		this.img_texture = null;
 		this.img_width = 0;
 		this.img_height = 0;
+		this.spriteObjs = [];
 	}
 
 	WebGLRenderer.prototype = {
+
+		init: function() {
+			this.img_width = 0;
+			this.img_height = 0;
+			this.img_texture = null;
+			this.spriteObjs.length = 0;
+		}, 
 
 		setImage: function(img) {
 			var isPOT = isPowerOfTwo(img.width) && isPowerOfTwo(img.height);
@@ -1143,16 +1342,52 @@ var Pano = Pano || {};
 			this.img_height = img.height;
 		}, 
 
-		render: function(origin, up, right) {
+		addSpriteImage: function(img) {
+			var gl = this.gl;
+
+			var spriteObj = {};
+
+			spriteObj.texture = gl.createTexture();
+			gl.bindTexture(gl.TEXTURE_2D, spriteObj.texture);
+			gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+			gl.bindTexture(gl.TEXTURE_2D, null);
+
+			spriteObj.coords = gl.createBuffer();
+			gl.bindBuffer(gl.ARRAY_BUFFER, spriteObj.coords);
+			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, 1, 1, -1, 1]), gl.STATIC_DRAW);
+			gl.bindBuffer(gl.ARRAY_BUFFER, null);
+
+			spriteObj.size = [img.width, img.height];
+			spriteObj.u_size = new Float32Array([1, 1]);
+			spriteObj.u_anchor = new Float32Array([0, 0]);
+
+			this.spriteObjs.push(spriteObj);
+			return this.spriteObjs.length;
+		}, 
+
+		beginFrame: function() {
+			var gl = this.gl;
+			gl.clearColor(0, 0, 0, 1);
+			gl.clear(gl.COLOR_BUFFER_BIT);
+			gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+		}, 
+
+		endFrame: function() {
+			this.gl.flush();
+		}, 
+
+		renderEquirectangular: function(origin, up, right) {
 			if (!this.gl || !this.img_texture)
 				return;
 
 			var gl = this.gl;
-			var canvasWidth = this.canvas.width;
-			var canvasHeight = this.canvas.height;
 
-			if (!this.program)
-				this.program = createProgram(gl, vert_shader, frag_shader);
+			if (!this.equirectangular_program)
+				this.equirectangular_program = createProgram(gl, equirectangular_vs, equirectangular_fs);
 
 			if (!this.canvas_quad) {
 				this.canvas_quad = {};
@@ -1162,25 +1397,22 @@ var Pano = Pano || {};
 				gl.bindBuffer(gl.ARRAY_BUFFER, null);
 			}
 
-			gl.clearColor(0, 0, 0, 1);
-			gl.clear(gl.COLOR_BUFFER_BIT);
-			gl.viewport(0, 0, canvasWidth, canvasHeight);
 
 			gl.disable(gl.BLEND);
 			gl.disable(gl.DEPTH_TEST);
 			gl.depthMask(false);
 
-			gl.useProgram(this.program);
+			gl.useProgram(this.equirectangular_program);
 
 			// update uniforms
-			gl.uniform3fv(gl.getUniformLocation(this.program, 'u_camUp'), up);
-			gl.uniform3fv(gl.getUniformLocation(this.program, 'u_camRight'), right);
-			gl.uniform3fv(gl.getUniformLocation(this.program, 'u_camPlaneOrigin'), origin);
+			gl.uniform3fv(gl.getUniformLocation(this.equirectangular_program, 'u_camUp'), up);
+			gl.uniform3fv(gl.getUniformLocation(this.equirectangular_program, 'u_camRight'), right);
+			gl.uniform3fv(gl.getUniformLocation(this.equirectangular_program, 'u_camPlaneOrigin'), origin);
 
 			// set sampler
 			gl.activeTexture(gl.TEXTURE0);
 			gl.bindTexture(gl.TEXTURE_2D, this.img_texture);
-			gl.uniform1i(gl.getUniformLocation(this.program, 's_texture'), 0);
+			gl.uniform1i(gl.getUniformLocation(this.equirectangular_program, 's_texture'), 0);
 
 			// render to canvas
 			gl.enableVertexAttribArray(0);
@@ -1189,8 +1421,60 @@ var Pano = Pano || {};
 			gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
 			gl.bindBuffer(gl.ARRAY_BUFFER, null);
 			gl.bindTexture(gl.TEXTURE_2D, null);
+		}, 
 
-			gl.flush();
+		begineSprite: function() {
+			if (!this.gl)
+				return;
+
+			var gl = this.gl;
+
+			if (!this.sprite_program)
+				this.sprite_program = createProgram(gl, sprite_vs, sprite_fs);
+			gl.useProgram(this.sprite_program);
+
+			gl.enable(gl.BLEND);
+			gl.blendFunc(gl.ONE, gl.ONE);
+			gl.blendEquation(gl.FUNC_ADD);
+		}, 
+
+		endSprite: function() {
+			if (!this.gl)
+				return;
+
+			var gl = this.gl;
+			gl.bindBuffer(gl.ARRAY_BUFFER, null);
+			gl.bindTexture(gl.TEXTURE_2D, null);
+		}, 
+
+		renderSprite: function(renderId, x, y, alpha) {
+			if (!this.gl || renderId < 1 || renderId > this.spriteObjs.length)
+				return;
+
+			var w = this.canvas.width;
+			var h = this.canvas.height;
+			var spriteObj = this.spriteObjs[renderId - 1];
+			spriteObj.u_size[0] = spriteObj.size[0] / w;
+			spriteObj.u_size[1] = spriteObj.size[1] / h;
+			spriteObj.u_anchor[0] = 2 * x / w + spriteObj.u_size[0] - 1;
+			spriteObj.u_anchor[1] = 2 * (1 - y / h) - spriteObj.u_size[1] - 1;
+
+			var gl = this.gl;
+
+			gl.uniform2fv(gl.getUniformLocation(this.sprite_program, 'u_anchor'), spriteObj.u_anchor);
+			gl.uniform2fv(gl.getUniformLocation(this.sprite_program, 'u_size'), spriteObj.u_size);
+			gl.uniform1f(gl.getUniformLocation(this.sprite_program, 'u_alpha'), alpha);
+
+			gl.activeTexture(gl.TEXTURE0);
+			gl.bindTexture(gl.TEXTURE_2D, spriteObj.texture);
+			gl.uniform1i(gl.getUniformLocation(this.sprite_program, 's_texture'), 0);
+
+			gl.enableVertexAttribArray(0);
+			gl.bindBuffer(gl.ARRAY_BUFFER, spriteObj.coords);
+			gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+			gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+			gl.bindBuffer(gl.ARRAY_BUFFER, null);
+			gl.bindTexture(gl.TEXTURE_2D, null);
 		}
 
 	};
