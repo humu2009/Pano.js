@@ -69,6 +69,15 @@
 			view.load('panoramas/gare-de-morez.jpg');
 
 			/*
+			 *	Create lens flare from the position of the sun.
+			 */
+			view.addLensFlare([	'flares/flare2.jpg', 
+								'flares/flare5.jpg', 
+								'flares/flare3.jpg', 
+								'flares/flare5.jpg', 
+								'flares/flare2.jpg' ], 8.59, 50.32);
+
+			/*
 			 *	Create a spinning animation which will be displayed when image is in loading.
 			 */
 			var spinner = new Spinner({color: '#fff', lines: 12}).spin(document.getElementById('spinner'));
