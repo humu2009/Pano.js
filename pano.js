@@ -36,8 +36,8 @@ var Pano = Pano || {};
 	var is_touch_device = window.createTouch != undefined;
 	var is_canvas_available = window.HTMLCanvasElement != undefined;
 	var is_webgl_available = window.WebGLRenderingContext != undefined;
-	var is_firefox = /Firefox[\/\s]\d+(?:.\d+)*/.exec(window.navigator.userAgent) != null;
-	var is_opera = /Opera[\/\s](\d+(?:.\d+)*)/.exec(window.navigator.userAgent) != null;
+	var is_firefox = /Firefox[\/\s]\d+(?:.\d+)*/.test(window.navigator.userAgent);
+	var is_opera = /Opera[\/\s]\d+(?:.\d+)*/.test(window.navigator.userAgent);
 
 	var requestAnimationFrame = window.requestAnimationFrame || function(callback) {
 		setTimeout(callback, 17);
@@ -760,9 +760,9 @@ var Pano = Pano || {};
 				if (!(url in this.flareImgs)) {
 					var img = new Image;
 					img.onload = function() {
-						var flare = self.flareImgs[this.key];
-						flare.ready = true;
-						flare.renderId = self.renderer.addSpriteImage(this);
+						var flareObj = self.flareImgs[this.key];
+						flareObj.ready = true;
+						flareObj.renderId = self.renderer.addSpriteImage(this);
 					};
 					this.flareImgs[url] = {
 						img:   img, 
@@ -966,6 +966,7 @@ var Pano = Pano || {};
 			this.renderer.begineSprite();
 			for (var i=0; i<this.lensFlares.length; i++) {
 				var lensFlare = this.lensFlares[i];
+				// calculate position of the corresponding light source on canvas
 				var lightPos = this.eulerToView(lensFlare.heading, lensFlare.pitch);
 				if (!lightPos)
 					continue;
@@ -973,13 +974,16 @@ var Pano = Pano || {};
 					lightPos[1] < 0 || lightPos[1] >= this.canvas.height)
 					continue;
 
+				// calculate the vector from the light source to center of the canvas
 				var dirX = centerX - lightPos[0];
 				var dirY = centerY - lightPos[1];
 				var l = Math.sqrt(dirX * dirX + dirY * dirY);
+				// render the group of flares
 				var flares = lensFlare.flares;
 				for (var j=0; j<flares.length; j++) {
 					var flare = flares[j];
 					if (flare.obj.ready) {
+						// the position of the upper-left corner of this flare on canvas
 						var x = lightPos[0] + 2 * lensFlare.range * flare.dist * dirX - 0.5 * flare.obj.img.width;
 						var y = lightPos[1] + 2 * lensFlare.range * flare.dist * dirY - 0.5 * flare.obj.img.height;
 						var alpha = 1 - l / halfLenOfDiagonal;
@@ -1523,6 +1527,8 @@ var Pano = Pano || {};
 
 			// convert the result back to euler angles
 			var angles = quatToEuler(k0*x0 + k1*x1, k0*y0 + k1*y1, k0*z0 + k1*z1, k0*w0 + k1*w1);
+
+			// calculate fov value by linear interpolation
 			var fov = (1 - fraction) * this.fov0 + fraction * this.fov1;
 
 			return {heading: angles[0], pitch: angles[1], fov: fov};
