@@ -27,7 +27,7 @@
 		 *	Create a spinning animation which will be displayed when image is in loading.
 		 */
 		var spinner = new Spinner({color: '#fff', lines: 12}).spin(document.getElementById('spinner'));
-		view.onLoad = view.onAbort = view.onError = function() {
+		view.OnLoadEnd = function() {
 			spinner.stop();
 		};
 
