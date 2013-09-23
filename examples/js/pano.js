@@ -1,24 +1,24 @@
 /**
-	@preserve Copyright (c) 2013 Humu humu2009@gmail.com
-	Pano.js can be freely distributed under the terms of the MIT license.
-
-	Permission is hereby granted, free of charge, to any person obtaining a copy
-	of this software and associated documentation files (the "Software"), to deal
-	in the Software without restriction, including without limitation the rights
-	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-	copies of the Software, and to permit persons to whom the Software is
-	furnished to do so, subject to the following conditions:
-
-	The above copyright notice and this permission notice shall be included in
-	all copies or substantial portions of the Software.
-
-	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-	THE SOFTWARE.
+ *	@preserve Copyright (c) 2013 Humu humu2009@gmail.com
+ *	Pano.js can be freely distributed under the terms of the MIT license.
+ *
+ *	Permission is hereby granted, free of charge, to any person obtaining a copy
+ *	of this software and associated documentation files (the "Software"), to deal
+ *	in the Software without restriction, including without limitation the rights
+ *	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *	copies of the Software, and to permit persons to whom the Software is
+ *	furnished to do so, subject to the following conditions:
+ *
+ *	The above copyright notice and this permission notice shall be included in
+ *	all copies or substantial portions of the Software.
+ *
+ *	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ *	THE SOFTWARE.
  */
 
 
@@ -129,7 +129,7 @@ var Pano = Pano || {};
 					'uniform sampler2D s_texture; \n' + 
 					'varying vec2 v_texcoord; \n' + 
 					'void main(void) { \n' + 
-					'	gl_FragColor = u_alpha * texture2D(s_texture, v_texcoord);' + 
+					'	gl_FragColor = u_alpha * texture2D(s_texture, v_texcoord); \n' + 
 					'}';
 
 	function clamp(val, min, max) {
@@ -1017,7 +1017,7 @@ var Pano = Pano || {};
 						var x = lightPos[0] + 2 * lensFlare.range * flare.dist * dirX;
 						var y = lightPos[1] + 2 * lensFlare.range * flare.dist * dirY;
 						var alpha = 1 - l / halfLenOfDiagonal;
-						this.renderer.renderSprite(flare.obj.renderId, x, y, alpha, flare.scale);
+						this.renderer.renderSprite(flare.obj.renderId, x, y, alpha, flare.scale, 'additive');
 					}
 				}
 			}
@@ -1086,7 +1086,7 @@ var Pano = Pano || {};
 		this.img_height = 0;
 		this.img_pixels = null;
 		this.sprite_imgs = [];
-		this.caches_sprites = [];
+		this.cached_sprites = [];
 	}
 
 	Canvas2DRenderer.prototype = {
@@ -1096,7 +1096,7 @@ var Pano = Pano || {};
 			this.img_height = 0;
 			this.img_pixels = null;
 			this.sprite_imgs.length = 0;
-			this.caches_sprites.length = 0;
+			this.cached_sprites.length = 0;
 		}, 
 
 		setImage: function(img) {
@@ -1136,13 +1136,15 @@ var Pano = Pano || {};
 
 			// draw all cached sprites
 			this.ctx2d.save();
-			this.ctx2d.globalCompositeOperation = 'lighter';
-			for (var i=0; i<this.caches_sprites.length; i++) {
-				var sprite = this.caches_sprites[i];
+			for (var i=0; i<this.cached_sprites.length; i++) {
+				var sprite = this.cached_sprites[i];
+				if (this.ctx2d.globalCompositeOperation != sprite.compositor)
+					this.ctx2d.globalCompositeOperation = sprite.compositor; // apply the pixel blending mode
 				this.ctx2d.globalAlpha = sprite.alpha;
 				this.ctx2d.drawImage(sprite.img, sprite.left, sprite.top, sprite.width, sprite.height);
 			}
-			this.caches_sprites.length = 0;
+			// clear the sprite cache
+			this.cached_sprites.length = 0;
 			this.ctx2d.restore();
 		}, 
 
@@ -1289,7 +1291,7 @@ var Pano = Pano || {};
 		endSprite: function() {
 		}, 
 
-		renderSprite: function(renderId, x, y, alpha, scale) {
+		renderSprite: function(renderId, x, y, alpha, scale, blending) {
 			if (!this.canvas_data || renderId < 1 || renderId > this.sprite_imgs.length)
 				return;
 
@@ -1302,13 +1304,14 @@ var Pano = Pano || {};
 			h *= scale;
 
 			// drawing of sprites will be defered until the panorama has been applied to canvas
-			this.caches_sprites.push({
+			this.cached_sprites.push({
 				img: img, 
 				left: Math.floor(0.5 + x - 0.5 * w), 
 				top:  Math.floor(0.5 + y - 0.5 * h), 
 				width:	Math.floor(w), 
 				height: Math.floor(h), 
-				alpha: alpha != undefined ? alpha : 1
+				alpha: (alpha != undefined) ? alpha : 1, 
+				compositor: (blending == 'additive') ? 'lighter' : 'source-over'
 			});
 		}
 
@@ -1453,7 +1456,6 @@ var Pano = Pano || {};
 			gl.useProgram(this.sprite_program);
 
 			gl.enable(gl.BLEND);
-			gl.blendFunc(gl.ONE, gl.ONE);
 			gl.blendEquation(gl.FUNC_ADD);
 		}, 
 
@@ -1466,7 +1468,7 @@ var Pano = Pano || {};
 			gl.bindTexture(gl.TEXTURE_2D, null);
 		}, 
 
-		renderSprite: function(renderId, x, y, alpha, scale) {
+		renderSprite: function(renderId, x, y, alpha, scale, blending) {
 			if (!this.gl || renderId < 1 || renderId > this.sprite_objs.length)
 				return;
 
@@ -1482,6 +1484,11 @@ var Pano = Pano || {};
 			spriteObj.u_anchor[1] = 2 * (1 - y / h) - 1;
 
 			var gl = this.gl;
+
+			if (blending == 'additive')
+				gl.blendFunc(gl.ONE, gl.ONE);
+			else
+				gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE);
 
 			gl.uniform2fv(gl.getUniformLocation(this.sprite_program, 'u_anchor'), spriteObj.u_anchor);
 			gl.uniform2fv(gl.getUniformLocation(this.sprite_program, 'u_size'), spriteObj.u_size);
@@ -1546,7 +1553,7 @@ var Pano = Pano || {};
 			// convert the result back to euler angles
 			var angles = quatToEuler(k0*x0 + k1*x1, k0*y0 + k1*y1, k0*z0 + k1*z1, k0*w0 + k1*w1);
 
-			// calculate fov value by linear interpolation
+			// calculate field of view using linear interpolation
 			var fov = (1 - fraction) * this.fov0 + fraction * this.fov1;
 
 			return {heading: angles[0], pitch: angles[1], fov: fov};
