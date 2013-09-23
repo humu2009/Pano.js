@@ -88,9 +88,9 @@
 			document.getElementById('loading').appendChild(sonic.canvas);
 
 			/*
-			 *	Stop animation when loading is done.
+			 *	Stop animation when loading is ended (either succeeded or failed).
 			 */
-			view.onLoad = function() {
+			view.OnLoadEnd = function() {
 				sonic.stop();
 				document.getElementById('loading').style.display = 'none';
 			};
