@@ -407,8 +407,10 @@ var Pano = Pano || {};
 		this.on_load_handler = null;
 		this.on_abort_handler = null;
 		this.on_error_handler = null;
-		this.enter_frame_handler = null;
-		this.exit_frame_handler = null;
+		this.on_load_start_handler = null;
+		this.on_load_end_handler = null;
+		this.on_enter_frame_handler = null;
+		this.on_exit_frame_handler = null;
 
 		var inertial_yaw = function() {
 			if (self.inert_heading_step != 0) {
@@ -492,6 +494,24 @@ var Pano = Pano || {};
 				this.on_load_handler = callback;
 		}, 
 
+		get OnLoadStart() {
+			return this.on_load_start_handler;
+		}, 
+
+		set OnLoadStart(callback) {
+			if (!callback || (typeof callback) == 'function')
+				this.on_load_start_handler = callback;
+		}, 
+
+		get OnLoadEnd() {
+			return this.on_load_end_handler;
+		}, 
+
+		set OnLoadEnd(callback) {
+			if (!callback || (typeof callback) == 'function')
+				this.on_load_end_handler = callback;
+		}, 
+
 		get onAbort() {
 			return this.on_abort_handler;
 		}, 
@@ -511,21 +531,21 @@ var Pano = Pano || {};
 		}, 
 
 		get onEnterFrame() {
-			return this.enter_frame_handler;
+			return this.on_enter_frame_handler;
 		}, 
 
 		set onEnterFrame(callback) {
 			if (!callback || (typeof callback) == 'function')
-				this.enter_frame_handler = callback;
+				this.on_enter_frame_handler = callback;
 		}, 
 
 		get onExitFrame() {
-			return this.exit_frame_handler;
+			return this.on_exit_frame_handler;
 		}, 
 
 		set onExitFrame(callback) {
 			if (!callback || (typeof callback) == 'function')
-				this.exit_frame_handler = callback;
+				this.on_exit_frame_handler = callback;
 		}, 
 
 		load: function(url, reset) {
@@ -556,23 +576,32 @@ var Pano = Pano || {};
 				self.is_loaded = true;
 				if (self.on_load_handler)
 					self.on_load_handler.call(null, self);
+				if (self.on_load_end_handler)
+					self.on_load_end_handler.call(null, self);
 				self.renderer.setImage(this);
 				self.update();
 			};
 			this.img.onabort = function() {
-				self.img = null;
+				self.img = null;	// do not cache the image object in view instance
 				self.is_loading = false;
 				if (self.on_abort_handler)
 					self.on_abort_handler.call(null, self);
+				if (self.on_load_end_handler)
+					self.on_load_end_handler.call(null, self);
 			};
 			this.img.onerror = function() {
-				self.img = null;
+				self.img = null;	// do not cache the image object in view instance
 				self.is_loading = false;
 				if (self.on_error_handler)
 					self.on_error_handler.call(null, self);
+				if (self.on_load_end_handler)
+					self.on_load_end_handler.call(null, self);
 			};
-			this.img.src = url;
+
 			this.is_loading = true;
+			if (this.on_load_start_handler)
+				this.on_load_start_handler.call(null, this);
+			this.img.src = url;
 		}, 
 
 		reset: function() {
@@ -750,7 +779,7 @@ var Pano = Pano || {};
 			return container.id;
 		}, 
 
-		addLensFlare: function(flareImgURLs, heading, pitch, range) {
+		addLensFlare: function(flareImgURLs, heading, pitch, range, scales) {
 			range = range || 1;
 
 			var self = this;
@@ -774,6 +803,7 @@ var Pano = Pano || {};
 				}
 				flares.push({
 					obj:  this.flareImgs[url], 
+					scale: (scales && scales[i] > 0) ? scales[i] : 1, 
 					dist: (i + Math.random()) * range / flareImgURLs.length
 				});
 			}
@@ -913,8 +943,8 @@ var Pano = Pano || {};
 			if (this.canvas.height != this.canvas.clientHeight)
 				this.canvas.height = this.canvas.clientHeight;
 
-			if (this.enter_frame_handler)
-				this.enter_frame_handler.call(null, this, this.canvas.width, this.canvas.height);
+			if (this.on_enter_frame_handler)
+				this.on_enter_frame_handler.call(null, this, this.canvas.width, this.canvas.height);
 
 			this.renderer.beginFrame();
 			this._drawPanorama();
@@ -924,8 +954,8 @@ var Pano = Pano || {};
 			// update timestamp
 			this.last_draw_ms = Date.now();
 
-			if (this.exit_frame_handler)
-				this.exit_frame_handler.call(null, this, this.canvas.width, this.canvas.height);
+			if (this.on_exit_frame_handler)
+				this.on_exit_frame_handler.call(null, this, this.canvas.width, this.canvas.height);
 		}, 
 
 		_drawPanorama: function() {
@@ -983,11 +1013,11 @@ var Pano = Pano || {};
 				for (var j=0; j<flares.length; j++) {
 					var flare = flares[j];
 					if (flare.obj.ready) {
-						// the position of the upper-left corner of this flare on canvas
-						var x = lightPos[0] + 2 * lensFlare.range * flare.dist * dirX - 0.5 * flare.obj.img.width;
-						var y = lightPos[1] + 2 * lensFlare.range * flare.dist * dirY - 0.5 * flare.obj.img.height;
+						// the center position of this flare on canvas
+						var x = lightPos[0] + 2 * lensFlare.range * flare.dist * dirX;
+						var y = lightPos[1] + 2 * lensFlare.range * flare.dist * dirY;
 						var alpha = 1 - l / halfLenOfDiagonal;
-						this.renderer.renderSprite(flare.obj.renderId, x, y, alpha);
+						this.renderer.renderSprite(flare.obj.renderId, x, y, alpha, flare.scale);
 					}
 				}
 			}
@@ -1055,7 +1085,8 @@ var Pano = Pano || {};
 		this.img_width = 0;
 		this.img_height = 0;
 		this.img_pixels = null;
-		this.spriteImgDatas = [];
+		this.sprite_imgs = [];
+		this.caches_sprites = [];
 	}
 
 	Canvas2DRenderer.prototype = {
@@ -1064,7 +1095,8 @@ var Pano = Pano || {};
 			this.img_width = 0;
 			this.img_height = 0;
 			this.img_pixels = null;
-			this.spriteImgDatas.length = 0;
+			this.sprite_imgs.length = 0;
+			this.caches_sprites.length = 0;
 		}, 
 
 		setImage: function(img) {
@@ -1084,16 +1116,8 @@ var Pano = Pano || {};
 		}, 
 
 		addSpriteImage: function(img) {
-			var w = img.width;
-			var h = img.height;
-			var cv = getUtilCanvas(w, h);
-
-			var ctx = cv.getContext('2d');
-			ctx.drawImage(img, 0, 0, w, h);
-			var imgData = ctx.getImageData(0, 0, w, h);
-
-			this.spriteImgDatas.push(imgData);
-			return this.spriteImgDatas.length;
+			this.sprite_imgs.push(img);
+			return this.sprite_imgs.length;
 		}, 
 
 		beginFrame: function() {
@@ -1109,6 +1133,17 @@ var Pano = Pano || {};
 
 		endFrame: function() {
 			this.ctx2d.putImageData(this.canvas_data, 0, 0);
+
+			// draw all cached sprites
+			this.ctx2d.save();
+			this.ctx2d.globalCompositeOperation = 'lighter';
+			for (var i=0; i<this.caches_sprites.length; i++) {
+				var sprite = this.caches_sprites[i];
+				this.ctx2d.globalAlpha = sprite.alpha;
+				this.ctx2d.drawImage(sprite.img, sprite.left, sprite.top, sprite.width, sprite.height);
+			}
+			this.caches_sprites.length = 0;
+			this.ctx2d.restore();
 		}, 
 
 		renderEquirectangular: function(origin, up, right) {
@@ -1125,7 +1160,7 @@ var Pano = Pano || {};
 			var useBilinear = this.view.image_filtering == 'on' || (this.view.idle && this.view.image_filtering == 'on-idle');
 
 			/*
-			 *	The idea is rather straightforward: calculate a ray for each pixel on canvas based upon the camera plane. Then  
+			 *	The idea is quite straightforward: calculate a ray for each pixel on canvas based upon the camera plane. Then  
 			 *	calculate corresponding texture coordinates from the spherical coodinates (phi, theta) to get correct texels. 
 			 *	For efficiency, we only execute the calculation for each slice of 8 pixels and then linearly interpolate texels inside slices.
 			 */
@@ -1254,47 +1289,27 @@ var Pano = Pano || {};
 		endSprite: function() {
 		}, 
 
-		renderSprite: function(renderId, x, y, alpha) {
-			if (!this.canvas_data || renderId < 1 || renderId > this.spriteImgDatas.length)
+		renderSprite: function(renderId, x, y, alpha, scale) {
+			if (!this.canvas_data || renderId < 1 || renderId > this.sprite_imgs.length)
 				return;
 
-			var imgData = this.spriteImgDatas[renderId - 1];
-			var pixels = imgData.data;
-			var w = imgData.width;
-			var h = imgData.height;
-			x = Math.floor(0.5 + x);
-			y = Math.floor(0.5 + y);
+			var img = this.sprite_imgs[renderId - 1];
+			var w = img.width;
+			var h = img.height;
 
-			alpha = Math.floor((alpha != undefined ? alpha : 1) * 256);
+			scale = scale || 1;
+			w *= scale;
+			h *= scale;
 
-			var destRect = intersectRects(	{left: 0, top: 0, right: this.canvas_width, bottom: this.canvas_height}, 
-											{left: x, top: y, right: x+w, bottom: y+h} );
-			if (destRect.width >0 && destRect.height > 0) {
-				var destLeft   = destRect.left;
-				var destTop    = destRect.top;
-				var destRight  = destRect.right;
-				var destBottom = destRect.bottom;
-				var srcLeft   = destLeft - x;
-				var srcTop    = destTop - y;
-				var srcRight  = srcLeft + destRect.width;
-				var srcBottom = srcTop + destRect.height;
-
-				var data = this.canvas_data.data;
-				for (var i=srcTop; i<srcBottom; i++) {
-					var src  = 4 * (i * w + srcLeft);
-					var dest = 4 * ((destTop + i - srcTop) * this.canvas_width + destLeft);
-					for (var j=srcLeft; j<srcRight; j++) {
-						var r = data[dest    ] + ((alpha * pixels[src    ]) >> 8);
-						var g = data[dest + 1] + ((alpha * pixels[src + 1]) >> 8);
-						var b = data[dest + 2] + ((alpha * pixels[src + 2]) >> 8);
-						data[dest    ] = r > 255 ? 255 : r;
-						data[dest + 1] = g > 255 ? 255 : g;
-						data[dest + 2] = b > 255 ? 255 : b;
-						src += 4;
-						dest += 4;
-					}
-				}
-			}
+			// drawing of sprites will be defered until the panorama has been applied to canvas
+			this.caches_sprites.push({
+				img: img, 
+				left: Math.floor(0.5 + x - 0.5 * w), 
+				top:  Math.floor(0.5 + y - 0.5 * h), 
+				width:	Math.floor(w), 
+				height: Math.floor(h), 
+				alpha: alpha != undefined ? alpha : 1
+			});
 		}
 
 	};
@@ -1315,7 +1330,7 @@ var Pano = Pano || {};
 		this.img_texture = null;
 		this.img_width = 0;
 		this.img_height = 0;
-		this.spriteObjs = [];
+		this.sprite_objs = [];
 	}
 
 	WebGLRenderer.prototype = {
@@ -1324,7 +1339,7 @@ var Pano = Pano || {};
 			this.img_width = 0;
 			this.img_height = 0;
 			this.img_texture = null;
-			this.spriteObjs.length = 0;
+			this.sprite_objs.length = 0;
 		}, 
 
 		setImage: function(img) {
@@ -1369,8 +1384,8 @@ var Pano = Pano || {};
 			spriteObj.u_size = new Float32Array([1, 1]);
 			spriteObj.u_anchor = new Float32Array([0, 0]);
 
-			this.spriteObjs.push(spriteObj);
-			return this.spriteObjs.length;
+			this.sprite_objs.push(spriteObj);
+			return this.sprite_objs.length;
 		}, 
 
 		beginFrame: function() {
@@ -1451,17 +1466,20 @@ var Pano = Pano || {};
 			gl.bindTexture(gl.TEXTURE_2D, null);
 		}, 
 
-		renderSprite: function(renderId, x, y, alpha) {
-			if (!this.gl || renderId < 1 || renderId > this.spriteObjs.length)
+		renderSprite: function(renderId, x, y, alpha, scale) {
+			if (!this.gl || renderId < 1 || renderId > this.sprite_objs.length)
 				return;
+
+			alpha = (alpha != undefined) ? alpha : 1;
+			scale = scale || 1;
 
 			var w = this.canvas.width;
 			var h = this.canvas.height;
-			var spriteObj = this.spriteObjs[renderId - 1];
-			spriteObj.u_size[0] = spriteObj.size[0] / w;
-			spriteObj.u_size[1] = spriteObj.size[1] / h;
-			spriteObj.u_anchor[0] = 2 * x / w + spriteObj.u_size[0] - 1;
-			spriteObj.u_anchor[1] = 2 * (1 - y / h) - spriteObj.u_size[1] - 1;
+			var spriteObj = this.sprite_objs[renderId - 1];
+			spriteObj.u_size[0] = scale * spriteObj.size[0] / w;
+			spriteObj.u_size[1] = scale * spriteObj.size[1] / h;
+			spriteObj.u_anchor[0] = 2 * x / w - 1;
+			spriteObj.u_anchor[1] = 2 * (1 - y / h) - 1;
 
 			var gl = this.gl;
 
