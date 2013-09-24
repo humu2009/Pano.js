@@ -214,6 +214,12 @@ var Pano = Pano || {};
 		return util_canvas;
 	}
 
+	function generateImageFromCanvas(canvas) {
+		var img = new Image;
+		img.src = canvas.toDataURL();
+		return img;
+	}
+
 	function getWebGL(canvas) {
 		var ctx3dNames = ['webgl', 'experimental-webgl'];
 		for (var i=0; i<ctx3dNames.length; i++) {
@@ -1116,6 +1122,10 @@ var Pano = Pano || {};
 		}, 
 
 		addSpriteImage: function(img) {
+			// if the given object is a canvas, use its contents to create a real image
+			if (img instanceof window.HTMLCanvasElement)
+				img = generateImageFromCanvas(img);
+
 			this.sprite_imgs.push(img);
 			return this.sprite_imgs.length;
 		}, 
@@ -1139,7 +1149,7 @@ var Pano = Pano || {};
 			for (var i=0; i<this.cached_sprites.length; i++) {
 				var sprite = this.cached_sprites[i];
 				if (this.ctx2d.globalCompositeOperation != sprite.compositor)
-					this.ctx2d.globalCompositeOperation = sprite.compositor; // apply the pixel blending mode
+					this.ctx2d.globalCompositeOperation = sprite.compositor; // apply the given pixel blending mode
 				this.ctx2d.globalAlpha = sprite.alpha;
 				this.ctx2d.drawImage(sprite.img, sprite.left, sprite.top, sprite.width, sprite.height);
 			}
@@ -1246,7 +1256,9 @@ var Pano = Pano || {};
 						}
 					}
 					else {
-						// Apply bilinear filtering.
+						/*
+						 *	Apply bilinear filtering.
+						 */
 						//TODO: this still need to be optimized.
 						for (var j=0, theta256=~~(256*theta0), phi256=~~(256*phi0); j<rl; j++, theta256+=thetaInc256, phi256+=phiInc256) {
 							var t0 = theta256 >> 8;
@@ -1303,7 +1315,7 @@ var Pano = Pano || {};
 			w *= scale;
 			h *= scale;
 
-			// drawing of sprites will be defered until the panorama has been applied to canvas
+			// drawing of sprites will be defered until the end of each frame
 			this.cached_sprites.push({
 				img: img, 
 				left: Math.floor(0.5 + x - 0.5 * w), 
