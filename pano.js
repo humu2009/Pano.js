@@ -296,8 +296,6 @@ var Pano = Pano || {};
 				this.init_pitch = clamp(params['pitch'], 0, 180);
 			if ((typeof params['fov']) == 'number')
 				this.init_fov = clamp(params['fov'], 30, 90);
-			if ((typeof params['image']) == 'string' && params['image'] != '')
-				this.load(params['image']);
 			if (params['rendering'] == 'webgl')
 				forceWebGLRendering = true;
 			else if (params['rendering'] == 'software')
@@ -307,7 +305,7 @@ var Pano = Pano || {};
 			if ((typeof params['filtering']) == 'string')
 				this.image_filtering = params['filtering'];
 		}
-		
+
 		this.cam_heading = this.init_heading;
 		this.cam_pitch = this.init_pitch;
 		this.cam_fov = this.init_fov;
@@ -405,6 +403,8 @@ var Pano = Pano || {};
 			}
 		}
 		if (!this.renderer) {
+			if (forceWebGLRendering)
+				throw 'WebGL renderer is not available';
 			this.renderer = new Canvas2DRenderer(this);
 		}
 
@@ -470,7 +470,12 @@ var Pano = Pano || {};
 			setTimeout(tick, 30);
 		};
 
+		// start ticking
 		tick();
+
+		// load the given equirectangular image if any
+		if (params && (typeof params['image']) == 'string' && params['image'] != '')
+			this.load(params['image']);
 	}
 
 	View.prototype = {
