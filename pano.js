@@ -447,9 +447,9 @@ var Pano = Pano || {};
 				TWEEN.update();
 			}
 			if (self.dirty) {
-				// lower idle flag
+				// unset idle flag
 				self.idle = false;
-				// draw a new frame and see if there are any more animation
+				// draw a new frame and see if there are further animations
 				var has_next_frame = false;
 				if (self.inertial_move == 'on') {
 					has_next_frame = inertial_yaw();
@@ -461,7 +461,7 @@ var Pano = Pano || {};
 				
 			}
 			else if (!self.idle && (Date.now() - self.last_draw_ms >= 250)) {
-				// raise idle flag
+				// set idle flag
 				self.idle = true;
 				// draw a new frame with texture filtering on
 				if (!self.is_webgl_enabled && self.image_filtering == 'on-idle')
@@ -474,8 +474,8 @@ var Pano = Pano || {};
 		tick();
 
 		// load the given equirectangular image if any
-		if (params && (typeof params['image']) == 'string' && params['image'] != '')
-			this.load(params['image']);
+		if (params && (typeof params['equirectangular']) == 'string' && params['equirectangular'] != '')
+			this.load(params['equirectangular']);
 	}
 
 	View.prototype = {
