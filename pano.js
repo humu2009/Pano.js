@@ -1,24 +1,24 @@
 /**
- *	@preserve Copyright (c) 2013 Humu humu2009@gmail.com
- *	Pano.js can be freely distributed under the terms of the MIT license.
+ * @preserve Copyright (c) 2013 Humu <humu2009@gmail.com>
+ * Pano.js can be freely distributed under the terms of the MIT license.
  *
- *	Permission is hereby granted, free of charge, to any person obtaining a copy
- *	of this software and associated documentation files (the "Software"), to deal
- *	in the Software without restriction, including without limitation the rights
- *	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- *	copies of the Software, and to permit persons to whom the Software is
- *	furnished to do so, subject to the following conditions:
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *	The above copyright notice and this permission notice shall be included in
- *	all copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- *	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- *	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- *	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- *	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- *	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- *	THE SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
  */
 
 
@@ -48,6 +48,8 @@ var Pano = Pano || {};
 	var default_label_style = null;
 
 	var util_canvas = null;
+
+	var screenshot_helper = null;
 
 	var label_style_template =	'.label-frame { \n' + 
 								'	position:absolute; \n' + 
@@ -182,6 +184,18 @@ var Pano = Pano || {};
 		return (n & (n - 1)) == 0;
 	}
 
+	function getScriptPath(name, ignoreCase) {
+		var searchPattern = new RegExp('/' + name + '$', ignoreCase ? 'i' : '');
+		var scripts = document.getElementsByTagName("script");
+		for (var i=0; i<scripts.length; i++) {
+			var index = scripts[i].src.search(searchPattern);
+			if (index >= 0) {
+				return scripts[i].src.substring(0, index + 1);
+			}
+		}
+		return null;
+	}
+
 	function addCSSStyle(template) {
 		var cssStyle = document.createElement('style');
 		cssStyle.type = 'text/css';
@@ -216,7 +230,11 @@ var Pano = Pano || {};
 
 	function generateImageFromCanvas(canvas) {
 		var img = new Image;
-		img.src = canvas.toDataURL();
+		try {
+			img.src = canvas.toDataURL();
+		}
+		catch (e) {
+		}		
 		return img;
 	}
 
@@ -942,6 +960,51 @@ var Pano = Pano || {};
 			}
 		}, 
 
+		saveScreenshot: function(format, quality) {
+			format = (format == 'jpg' ? 'jpeg' : format) || 'jpeg';
+			quality = quality || 0.8;
+
+			var targetURL = getScriptPath('pano.js', true);
+			if (!targetURL)
+				return;
+
+			targetURL += 'save_screenshot.php';
+
+			try {
+				if (!screenshot_helper) {
+					screenshot_helper = document.createElement('iframe');
+					screenshot_helper.id = 'screenshot-helper';
+					screenshot_helper.name = 'screenshot-helper';
+					screenshot_helper.style.display = 'none';
+					document.body.appendChild(screenshot_helper);
+				}
+
+				var form = document.createElement('form');
+				form.action = targetURL;
+				form.method = 'post';
+				form.target = 'screenshot-helper';
+				form.style.display = 'none';
+
+				var input = document.createElement('input');
+				input.type  = 'hidden';
+				input.name  = 'dataurl';
+				/*
+				 * It seems Firefox's implementation does not like the 2nd argument of toDataURL(). A security
+				 * error will occur if it is set.  See https://bugzilla.mozilla.org/show_bug.cgi?id=564388.
+				 */
+				input.value = this.canvas.toDataURL.apply(this.canvas, is_firefox ? ['image/'+format] : ['image/'+format, quality]);
+
+				form.appendChild(input);
+				document.body.appendChild(form);
+
+				form.submit();
+
+				document.body.removeChild(form);
+			}
+			catch (e) {
+			}
+		}, 
+
 		update: function() {
 			this.dirty = true;
 		}, 
@@ -1004,7 +1067,7 @@ var Pano = Pano || {};
 			var centerY = this.canvas.height >> 1;
 			var halfLenOfDiagonal = Math.sqrt(centerX * centerX + centerY * centerY);
 
-			this.renderer.begineSprite();
+			this.renderer.beginSprite();
 			for (var i=0; i<this.lensFlares.length; i++) {
 				var lensFlare = this.lensFlares[i];
 				// calculate position of the corresponding light source on canvas
@@ -1302,7 +1365,7 @@ var Pano = Pano || {};
 			}
 		}, 
 
-		begineSprite: function() {
+		beginSprite: function() {
 		}, 
 
 		endSprite: function() {
@@ -1462,7 +1525,7 @@ var Pano = Pano || {};
 			gl.bindTexture(gl.TEXTURE_2D, null);
 		}, 
 
-		begineSprite: function() {
+		beginSprite: function() {
 			if (!this.gl)
 				return;
 
