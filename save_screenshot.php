@@ -26,21 +26,23 @@
 
 /**
  * Based on code originally implemented by Shinya Muramatsu <revulon@gmail.com>, 
- * under the MIT license.
+ * and published under the MIT license.
  */
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
+	// set correct MIME type for response
 	header('Content-Type: application/octet-stream');
 
 	if (isset($_POST['dataurl'])) {
+		// get the submitted stuff
 		$data = $_POST['dataurl'];
 
 		if (preg_match('/^data:image\/([a-zA-Z0-9]+);base64,/', $data, $matches)) {
-			// set file name for download
+			// force the response to be a downloadable file with correct file name
 			header('Content-Disposition: attachment; filename="screenshot.' . (($matches[1] === 'jpeg') ? 'jpg' : $matches[1]) . '"');
 
-			// remove the leading sections
+			// remove leading sections of the data URL
 			$data = substr($data, strpos($data, ',') + 1);
 			// Replace whitespaces, if any, with '+'. 
 			// See http://stackoverflow.com/questions/7291183/decoding-a-canvas-todataurl.
