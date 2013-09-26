@@ -238,6 +238,15 @@ var Pano = Pano || {};
 		return img;
 	}
 
+	function getDataURLFromCanvas(canvas, type, quality) {
+		type = type || 'image/png';
+		/*
+		 * It seems Firefox's implementation does not like the 2nd argument of toDataURL(). A security
+		 * error will occur if it is set.  See https://bugzilla.mozilla.org/show_bug.cgi?id=564388.
+		 */
+		return is_firefox ? canvas.toDataURL(type) : canvas.toDataURL(type, quality || 0.8);
+	}
+
 	function getWebGL(canvas) {
 		var ctx3dNames = ['webgl', 'experimental-webgl'];
 		for (var i=0; i<ctx3dNames.length; i++) {
@@ -970,15 +979,15 @@ var Pano = Pano || {};
 
 			targetURL += 'save_screenshot.php';
 
-			try {
-				if (!screenshot_helper) {
-					screenshot_helper = document.createElement('iframe');
-					screenshot_helper.id = 'screenshot-helper';
-					screenshot_helper.name = 'screenshot-helper';
-					screenshot_helper.style.display = 'none';
-					document.body.appendChild(screenshot_helper);
-				}
+			if (!screenshot_helper) {
+				screenshot_helper = document.createElement('iframe');
+				screenshot_helper.id = 'screenshot-helper';
+				screenshot_helper.name = 'screenshot-helper';
+				screenshot_helper.style.display = 'none';
+				document.body.appendChild(screenshot_helper);
+			}
 
+			this.renderer.readPixelsAsDataURL('image/' + format, quality, function(unused, dataURL) {
 				var form = document.createElement('form');
 				form.action = targetURL;
 				form.method = 'post';
@@ -988,11 +997,7 @@ var Pano = Pano || {};
 				var input = document.createElement('input');
 				input.type  = 'hidden';
 				input.name  = 'dataurl';
-				/*
-				 * It seems Firefox's implementation does not like the 2nd argument of toDataURL(). A security
-				 * error will occur if it is set.  See https://bugzilla.mozilla.org/show_bug.cgi?id=564388.
-				 */
-				input.value = this.canvas.toDataURL.apply(this.canvas, is_firefox ? ['image/'+format] : ['image/'+format, quality]);
+				input.value = dataURL;
 
 				form.appendChild(input);
 				document.body.appendChild(form);
@@ -1000,8 +1005,10 @@ var Pano = Pano || {};
 				form.submit();
 
 				document.body.removeChild(form);
-			}
-			catch (e) {
+			});
+
+			if (this.is_webgl_enabled) {
+				this.update();
 			}
 		}, 
 
@@ -1393,6 +1400,24 @@ var Pano = Pano || {};
 				alpha: (alpha != undefined) ? alpha : 1, 
 				compositor: (blending == 'additive') ? 'lighter' : 'source-over'
 			});
+		}, 
+
+		readPixelsAsDataURL: function(type, quality, callbackOnReady) {
+			try {
+				var dataURL = getDataURLFromCanvas(this.canvas, type, quality);
+				if (callbackOnReady && (typeof callbackOnReady) == 'function') {
+					var self = this;
+					setTimeout(function() {
+						callbackOnReady.call(null, self, dataURL);
+					}, 1);
+				}
+				else
+					return dataURL;
+			}
+			catch (e) {
+			}
+
+			return undefined;
 		}
 
 	};
@@ -1414,6 +1439,7 @@ var Pano = Pano || {};
 		this.img_width = 0;
 		this.img_height = 0;
 		this.sprite_objs = [];
+		this.dataurl_requester = null;
 	}
 
 	WebGLRenderer.prototype = {
@@ -1480,6 +1506,16 @@ var Pano = Pano || {};
 
 		endFrame: function() {
 			this.gl.flush();
+
+			if (this.dataurl_requester) {
+				try {
+					var daraURL = getDataURLFromCanvas(this.canvas, this.dataurl_requester.type, this.dataurl_requester.quality);
+					this.dataurl_requester.callback.call(null, this, daraURL);
+				}
+				catch (e) {
+				}
+				this.dataurl_requester = null;
+			}
 		}, 
 
 		renderEquirectangular: function(origin, up, right) {
@@ -1584,6 +1620,25 @@ var Pano = Pano || {};
 			gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
 			gl.bindBuffer(gl.ARRAY_BUFFER, null);
 			gl.bindTexture(gl.TEXTURE_2D, null);
+		}, 
+
+		readPixelsAsDataURL: function(type, quality, callbackOnReady) {
+			if (callbackOnReady && (typeof callbackOnReady) == 'function') {
+				this.dataurl_requester = {
+					type:     type, 
+					quality:  quality, 
+					callback: callbackOnReady
+				};
+			}
+			else {
+				try {
+					return getDataURLFromCanvas(this.canvas, type, quality);
+				}
+				catch (e) {
+				}
+			}
+
+			return undefined;
 		}
 
 	};
