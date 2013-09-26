@@ -1,24 +1,24 @@
 /**
- *	@preserve Copyright (c) 2013 Humu humu2009@gmail.com
- *	Pano.js can be freely distributed under the terms of the MIT license.
+ * @preserve Copyright (c) 2013 Humu <humu2009@gmail.com>
+ * Pano.js can be freely distributed under the terms of the MIT license.
  *
- *	Permission is hereby granted, free of charge, to any person obtaining a copy
- *	of this software and associated documentation files (the "Software"), to deal
- *	in the Software without restriction, including without limitation the rights
- *	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- *	copies of the Software, and to permit persons to whom the Software is
- *	furnished to do so, subject to the following conditions:
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *	The above copyright notice and this permission notice shall be included in
- *	all copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- *	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- *	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- *	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- *	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- *	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- *	THE SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
  */
 
 
@@ -48,6 +48,9 @@ var Pano = Pano || {};
 	var default_label_style = null;
 
 	var util_canvas = null;
+
+	var screenshot_helper = null;
+	var screenshot_method = 'unknown';
 
 	var label_style_template =	'.label-frame { \n' + 
 								'	position:absolute; \n' + 
@@ -182,6 +185,18 @@ var Pano = Pano || {};
 		return (n & (n - 1)) == 0;
 	}
 
+	function getScriptPath(name, ignoreCase) {
+		var searchPattern = new RegExp('/' + name + '$', ignoreCase ? 'i' : '');
+		var scripts = document.getElementsByTagName("script");
+		for (var i=0; i<scripts.length; i++) {
+			var index = scripts[i].src.search(searchPattern);
+			if (index >= 0) {
+				return scripts[i].src.substring(0, index + 1);
+			}
+		}
+		return null;
+	}
+
 	function addCSSStyle(template) {
 		var cssStyle = document.createElement('style');
 		cssStyle.type = 'text/css';
@@ -212,6 +227,25 @@ var Pano = Pano || {};
 		}
 
 		return util_canvas;
+	}
+
+	function generateImageFromCanvas(canvas) {
+		var img = new Image;
+		try {
+			img.src = canvas.toDataURL();
+		}
+		catch (e) {
+		}		
+		return img;
+	}
+
+	function getDataURLFromCanvas(canvas, type, quality) {
+		type = type || 'image/png';
+		/*
+		 * It seems Firefox's implementation does not like the 2nd argument of toDataURL(). A security
+		 * error will occur if it is set.  See https://bugzilla.mozilla.org/show_bug.cgi?id=564388.
+		 */
+		return is_firefox ? canvas.toDataURL(type) : canvas.toDataURL(type, quality || 0.8);
 	}
 
 	function getWebGL(canvas) {
@@ -290,8 +324,6 @@ var Pano = Pano || {};
 				this.init_pitch = clamp(params['pitch'], 0, 180);
 			if ((typeof params['fov']) == 'number')
 				this.init_fov = clamp(params['fov'], 30, 90);
-			if ((typeof params['image']) == 'string' && params['image'] != '')
-				this.load(params['image']);
 			if (params['rendering'] == 'webgl')
 				forceWebGLRendering = true;
 			else if (params['rendering'] == 'software')
@@ -301,7 +333,7 @@ var Pano = Pano || {};
 			if ((typeof params['filtering']) == 'string')
 				this.image_filtering = params['filtering'];
 		}
-		
+
 		this.cam_heading = this.init_heading;
 		this.cam_pitch = this.init_pitch;
 		this.cam_fov = this.init_fov;
@@ -399,6 +431,8 @@ var Pano = Pano || {};
 			}
 		}
 		if (!this.renderer) {
+			if (forceWebGLRendering)
+				throw 'WebGL renderer is not available';
 			this.renderer = new Canvas2DRenderer(this);
 		}
 
@@ -441,9 +475,9 @@ var Pano = Pano || {};
 				TWEEN.update();
 			}
 			if (self.dirty) {
-				// lower idle flag
+				// unset idle flag
 				self.idle = false;
-				// draw a new frame and see if there are any more animation
+				// draw a new frame and see if there are further animations
 				var has_next_frame = false;
 				if (self.inertial_move == 'on') {
 					has_next_frame = inertial_yaw();
@@ -455,7 +489,7 @@ var Pano = Pano || {};
 				
 			}
 			else if (!self.idle && (Date.now() - self.last_draw_ms >= 250)) {
-				// raise idle flag
+				// set idle flag
 				self.idle = true;
 				// draw a new frame with texture filtering on
 				if (!self.is_webgl_enabled && self.image_filtering == 'on-idle')
@@ -464,7 +498,12 @@ var Pano = Pano || {};
 			setTimeout(tick, 30);
 		};
 
+		// start ticking
 		tick();
+
+		// load the given equirectangular image if any
+		if (params && (typeof params['equirectangular']) == 'string' && params['equirectangular'] != '')
+			this.load(params['equirectangular']);
 	}
 
 	View.prototype = {
@@ -931,6 +970,87 @@ var Pano = Pano || {};
 			}
 		}, 
 
+		saveScreenshot: function(format, quality) {
+			format = (format == 'jpg' ? 'jpeg' : format) || 'jpeg';
+			quality = quality || 0.8;
+
+			if (screenshot_method == 'unknown') {
+				screenshot_helper = document.createElement('a');
+				if ((typeof screenshot_helper.download) == 'string') {
+					screenshot_method = 'local';
+					screenshot_helper.id = 'screenshot-helper';
+					screenshot_helper.href = 'javscript:void(0)';
+				}
+				else {
+					screenshot_method = 'remote';
+					screenshot_helper = document.createElement('iframe');
+					screenshot_helper.id = 'screenshot-helper';
+					screenshot_helper.name = 'screenshot-helper';
+				}
+				screenshot_helper.style.display = 'none';
+				document.body.appendChild(screenshot_helper);
+			}
+
+			var fireDownload;
+			if (screenshot_method == 'local') {
+				/*
+				 * Set anchor's 'download' attribute with a correct file name. This specifies a new navigation 
+				 * behaviour that when the link is clicked, it prompts the user to save the given data URL as a
+				 * local image file.
+				 * See http://caniuse.com/#feat=download and https://developer.mozilla.org/en-US/docs/Web/HTML/Element/a 
+				 * for support of the 'download' attribute on different browsers. 
+				 */
+				fireDownload = function(unused, dataURL) {
+					var matches = /^data:image\/([a-zA-Z0-9]+);base64,/.exec(dataURL);
+					var extension = matches[1] == 'jpeg' ? 'jpg' : matches[1];
+
+					screenshot_helper.download = 'screenshot.' + extension;
+					screenshot_helper.onclick = function() {
+						this.href = dataURL;
+					};
+
+					// fire a click event to the anchor to launch the download
+					screenshot_helper.click();
+				};
+			}
+			else {
+				/*
+				 * Send the data URL to server side, where it will be decoded and packed to an image file 
+				 * with correct file extension and then a download will be launched.
+				 */
+				fireDownload = function(unused, dataURL) {
+					var targetURL = getScriptPath('pano.js', true);
+					if (targetURL) {
+						var form = document.createElement('form');
+						form.action = targetURL + 'save_screenshot.php';
+						form.method = 'post';
+						form.target = 'screenshot-helper';
+						form.style.display = 'none';
+
+						var input = document.createElement('input');
+						input.type  = 'hidden';
+						input.name  = 'dataurl';
+						input.value = dataURL;
+
+						form.appendChild(input);
+						document.body.appendChild(form);
+
+						form.submit();
+						document.body.removeChild(form);
+					}
+				};
+			}
+
+			// Read instant state of the canvas as data URL in asynchronous mode, and then launch download using
+			// the given method as soon as the data is ready.
+			this.renderer.readPixelsAsDataURL('image/' + format, quality, fireDownload);
+
+			// for WebGL renderer, an extra frame is required to generate and pass back the data URL immediately
+			if (this.is_webgl_enabled) {
+				this.update();
+			}
+		}, 
+
 		update: function() {
 			this.dirty = true;
 		}, 
@@ -993,7 +1113,7 @@ var Pano = Pano || {};
 			var centerY = this.canvas.height >> 1;
 			var halfLenOfDiagonal = Math.sqrt(centerX * centerX + centerY * centerY);
 
-			this.renderer.begineSprite();
+			this.renderer.beginSprite();
 			for (var i=0; i<this.lensFlares.length; i++) {
 				var lensFlare = this.lensFlares[i];
 				// calculate position of the corresponding light source on canvas
@@ -1116,6 +1236,10 @@ var Pano = Pano || {};
 		}, 
 
 		addSpriteImage: function(img) {
+			// if the given object is a canvas, use its contents to create a real image
+			if (img instanceof window.HTMLCanvasElement)
+				img = generateImageFromCanvas(img);
+
 			this.sprite_imgs.push(img);
 			return this.sprite_imgs.length;
 		}, 
@@ -1139,7 +1263,7 @@ var Pano = Pano || {};
 			for (var i=0; i<this.cached_sprites.length; i++) {
 				var sprite = this.cached_sprites[i];
 				if (this.ctx2d.globalCompositeOperation != sprite.compositor)
-					this.ctx2d.globalCompositeOperation = sprite.compositor; // apply the pixel blending mode
+					this.ctx2d.globalCompositeOperation = sprite.compositor; // apply the given pixel blending mode
 				this.ctx2d.globalAlpha = sprite.alpha;
 				this.ctx2d.drawImage(sprite.img, sprite.left, sprite.top, sprite.width, sprite.height);
 			}
@@ -1246,7 +1370,9 @@ var Pano = Pano || {};
 						}
 					}
 					else {
-						// Apply bilinear filtering.
+						/*
+						 *	Apply bilinear filtering.
+						 */
 						//TODO: this still need to be optimized.
 						for (var j=0, theta256=~~(256*theta0), phi256=~~(256*phi0); j<rl; j++, theta256+=thetaInc256, phi256+=phiInc256) {
 							var t0 = theta256 >> 8;
@@ -1285,7 +1411,7 @@ var Pano = Pano || {};
 			}
 		}, 
 
-		begineSprite: function() {
+		beginSprite: function() {
 		}, 
 
 		endSprite: function() {
@@ -1303,7 +1429,7 @@ var Pano = Pano || {};
 			w *= scale;
 			h *= scale;
 
-			// drawing of sprites will be defered until the panorama has been applied to canvas
+			// drawing of sprites will be defered until the end of each frame
 			this.cached_sprites.push({
 				img: img, 
 				left: Math.floor(0.5 + x - 0.5 * w), 
@@ -1313,6 +1439,28 @@ var Pano = Pano || {};
 				alpha: (alpha != undefined) ? alpha : 1, 
 				compositor: (blending == 'additive') ? 'lighter' : 'source-over'
 			});
+		}, 
+
+		readPixelsAsDataURL: function(type, quality, callbackOnReady) {
+			try {
+				var dataURL = getDataURLFromCanvas(this.canvas, type, quality);
+				/*
+				 * If callbackOnReady is set, it will be used to passing back the data URL in 
+				 * an asynchronous manner. Otherwise the data URL will be returned immediately.
+				 */
+				if (callbackOnReady && (typeof callbackOnReady) == 'function') {
+					var self = this;
+					setTimeout(function() {
+						callbackOnReady.call(null, self, dataURL);
+					}, 1);
+				}
+				else
+					return dataURL;
+			}
+			catch (e) {
+			}
+
+			return undefined;
 		}
 
 	};
@@ -1334,6 +1482,7 @@ var Pano = Pano || {};
 		this.img_width = 0;
 		this.img_height = 0;
 		this.sprite_objs = [];
+		this.dataurl_requester = null;
 	}
 
 	WebGLRenderer.prototype = {
@@ -1400,6 +1549,17 @@ var Pano = Pano || {};
 
 		endFrame: function() {
 			this.gl.flush();
+
+			// get data URL from canvas and pass it to its requester using the registered callback function
+			if (this.dataurl_requester) {
+				try {
+					var daraURL = getDataURLFromCanvas(this.canvas, this.dataurl_requester.type, this.dataurl_requester.quality);
+					this.dataurl_requester.callback.call(null, this, daraURL);
+				}
+				catch (e) {
+				}
+				this.dataurl_requester = null;
+			}
 		}, 
 
 		renderEquirectangular: function(origin, up, right) {
@@ -1445,7 +1605,7 @@ var Pano = Pano || {};
 			gl.bindTexture(gl.TEXTURE_2D, null);
 		}, 
 
-		begineSprite: function() {
+		beginSprite: function() {
 			if (!this.gl)
 				return;
 
@@ -1504,6 +1664,31 @@ var Pano = Pano || {};
 			gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
 			gl.bindBuffer(gl.ARRAY_BUFFER, null);
 			gl.bindTexture(gl.TEXTURE_2D, null);
+		}, 
+
+		readPixelsAsDataURL: function(type, quality, callbackOnReady) {
+			/*
+			 * If callbackOnReady is set a function, the data URL will be generated and passed back asynchronously
+			 * when next frame is done. This ensures a non-blank result that holds the instant state of the canvas.
+			 * Otherwise the data URL will be generated and returned immediately. In this case, the result may be an
+			 * image with expected contents or just a blank one, depending on the implementation of different browsers.
+			 */
+			if (callbackOnReady && (typeof callbackOnReady) == 'function') {
+				this.dataurl_requester = {
+					type:     type, 
+					quality:  quality, 
+					callback: callbackOnReady
+				};
+			}
+			else {
+				try {
+					return getDataURLFromCanvas(this.canvas, type, quality);
+				}
+				catch (e) {
+				}
+			}
+
+			return undefined;
 		}
 
 	};
