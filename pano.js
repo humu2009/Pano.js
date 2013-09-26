@@ -50,6 +50,7 @@ var Pano = Pano || {};
 	var util_canvas = null;
 
 	var screenshot_helper = null;
+	var screenshot_method = 'unknown';
 
 	var label_style_template =	'.label-frame { \n' + 
 								'	position:absolute; \n' + 
@@ -973,40 +974,78 @@ var Pano = Pano || {};
 			format = (format == 'jpg' ? 'jpeg' : format) || 'jpeg';
 			quality = quality || 0.8;
 
-			var targetURL = getScriptPath('pano.js', true);
-			if (!targetURL)
-				return;
-
-			targetURL += 'save_screenshot.php';
-
-			if (!screenshot_helper) {
-				screenshot_helper = document.createElement('iframe');
-				screenshot_helper.id = 'screenshot-helper';
-				screenshot_helper.name = 'screenshot-helper';
+			if (screenshot_method == 'unknown') {
+				screenshot_helper = document.createElement('a');
+				if ((typeof screenshot_helper.download) == 'string') {
+					screenshot_method = 'local';
+					screenshot_helper.id = 'screenshot-helper';
+					screenshot_helper.href = 'javscript:void(0)';
+				}
+				else {
+					screenshot_method = 'remote';
+					screenshot_helper = document.createElement('iframe');
+					screenshot_helper.id = 'screenshot-helper';
+					screenshot_helper.name = 'screenshot-helper';
+				}
 				screenshot_helper.style.display = 'none';
 				document.body.appendChild(screenshot_helper);
 			}
 
-			this.renderer.readPixelsAsDataURL('image/' + format, quality, function(unused, dataURL) {
-				var form = document.createElement('form');
-				form.action = targetURL;
-				form.method = 'post';
-				form.target = 'screenshot-helper';
-				form.style.display = 'none';
+			var fireDownload;
+			if (screenshot_method == 'local') {
+				/*
+				 * Set anchor's 'download' attribute with a correct file name. This specifies a new navigation 
+				 * behaviour that when the link is clicked, it prompts the user to save the given data URL as a
+				 * local image file.
+				 * See http://caniuse.com/#feat=download and https://developer.mozilla.org/en-US/docs/Web/HTML/Element/a 
+				 * for support of the 'download' attribute on different browsers. 
+				 */
+				fireDownload = function(unused, dataURL) {
+					var matches = /^data:image\/([a-zA-Z0-9]+);base64,/.exec(dataURL);
+					var extension = matches[1] == 'jpeg' ? 'jpg' : matches[1];
 
-				var input = document.createElement('input');
-				input.type  = 'hidden';
-				input.name  = 'dataurl';
-				input.value = dataURL;
+					screenshot_helper.download = 'screenshot.' + extension;
+					screenshot_helper.onclick = function() {
+						this.href = dataURL;
+					};
 
-				form.appendChild(input);
-				document.body.appendChild(form);
+					// fire a click event to the anchor to launch the download
+					screenshot_helper.click();
+				};
+			}
+			else {
+				/*
+				 * Send the data URL to server side, where it will be decoded and packed to an image file 
+				 * with correct file extension and then a download will be launched.
+				 */
+				fireDownload = function(unused, dataURL) {
+					var targetURL = getScriptPath('pano.js', true);
+					if (targetURL) {
+						var form = document.createElement('form');
+						form.action = targetURL + 'save_screenshot.php';
+						form.method = 'post';
+						form.target = 'screenshot-helper';
+						form.style.display = 'none';
 
-				form.submit();
+						var input = document.createElement('input');
+						input.type  = 'hidden';
+						input.name  = 'dataurl';
+						input.value = dataURL;
 
-				document.body.removeChild(form);
-			});
+						form.appendChild(input);
+						document.body.appendChild(form);
 
+						form.submit();
+						document.body.removeChild(form);
+					}
+				};
+			}
+
+			// Read instant state of the canvas as data URL in asynchronous mode, and then launch download using
+			// the given method as soon as the data is ready.
+			this.renderer.readPixelsAsDataURL('image/' + format, quality, fireDownload);
+
+			// for WebGL renderer, an extra frame is required to generate and pass back the data URL immediately
 			if (this.is_webgl_enabled) {
 				this.update();
 			}
@@ -1405,6 +1444,10 @@ var Pano = Pano || {};
 		readPixelsAsDataURL: function(type, quality, callbackOnReady) {
 			try {
 				var dataURL = getDataURLFromCanvas(this.canvas, type, quality);
+				/*
+				 * If callbackOnReady is set, it will be used to passing back the data URL in 
+				 * an asynchronous manner. Otherwise the data URL will be returned immediately.
+				 */
 				if (callbackOnReady && (typeof callbackOnReady) == 'function') {
 					var self = this;
 					setTimeout(function() {
@@ -1507,6 +1550,7 @@ var Pano = Pano || {};
 		endFrame: function() {
 			this.gl.flush();
 
+			// get data URL from canvas and pass it to its requester using the registered callback function
 			if (this.dataurl_requester) {
 				try {
 					var daraURL = getDataURLFromCanvas(this.canvas, this.dataurl_requester.type, this.dataurl_requester.quality);
@@ -1623,6 +1667,12 @@ var Pano = Pano || {};
 		}, 
 
 		readPixelsAsDataURL: function(type, quality, callbackOnReady) {
+			/*
+			 * If callbackOnReady is set a function, the data URL will be generated and passed back asynchronously
+			 * when next frame is done. This ensures a non-blank result that holds the instant state of the canvas.
+			 * Otherwise the data URL will be generated and returned immediately. In this case, the result may be an
+			 * image with expected contents or just a blank one, depending on the implementation of different browsers.
+			 */
 			if (callbackOnReady && (typeof callbackOnReady) == 'function') {
 				this.dataurl_requester = {
 					type:     type, 
