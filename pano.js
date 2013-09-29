@@ -970,7 +970,8 @@ var Pano = Pano || {};
 			}
 		}, 
 
-		saveScreenshot: function(format, quality) {
+		saveScreenshot: function(basename, format, quality) {
+			basename = basename || 'screenshot';
 			format = (format == 'jpg' ? 'jpeg' : format) || 'jpeg';
 			quality = quality || 0.8;
 
@@ -1004,7 +1005,7 @@ var Pano = Pano || {};
 					var matches = /^data:image\/([a-zA-Z0-9]+);base64,/.exec(dataURL);
 					var extension = matches[1] == 'jpeg' ? 'jpg' : matches[1];
 
-					screenshot_helper.download = 'screenshot.' + extension;
+					screenshot_helper.download = basename + '.' + extension;
 					screenshot_helper.onclick = function() {
 						this.href = dataURL;
 					};
@@ -1032,7 +1033,13 @@ var Pano = Pano || {};
 						input.name  = 'dataurl';
 						input.value = dataURL;
 
+						var input2 = document.createElement('input');
+						input2.type  = 'hidden';
+						input2.name  = 'basename';
+						input2.value = basename;
+
 						form.appendChild(input);
+						form.appendChild(input2);
 						document.body.appendChild(form);
 
 						form.submit();
