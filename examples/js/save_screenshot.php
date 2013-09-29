@@ -39,8 +39,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		$data = $_POST['dataurl'];
 
 		if (preg_match('/^data:image\/([a-zA-Z0-9]+);base64,/', $data, $matches)) {
+			$basename = isset($_POST['basename']) ? $_POST['basename'] : 'screenshot';
+
 			// force the response to be a downloadable file with correct file name
-			header('Content-Disposition: attachment; filename="screenshot.' . (($matches[1] === 'jpeg') ? 'jpg' : $matches[1]) . '"');
+			header('Content-Disposition: attachment; filename="' . $basename . '.' . (($matches[1] === 'jpeg') ? 'jpg' : $matches[1]) . '"');
 
 			// remove leading sections of the data URL
 			$data = substr($data, strpos($data, ',') + 1);
