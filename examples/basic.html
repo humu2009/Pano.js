@@ -10,6 +10,7 @@
 		<canvas id="cv" width="800" height="600" style="background:#666; border: 1px solid;"></canvas>
 		<div id="spinner" style="position:absolute; left:400px; top:300px;"></div>
 		<a id="reposition-toggle" style="position:absolute; left:760px; top:5px; width:36px; height:26px; cursor:pointer; z-index:1025; background: url(./resource/maximize.png);" onclick="layoutElements();"></a>
+		<a id="sound-toggle" style="position:absolute; left:772px; top:572px; width:22px; height:22px; cursor:pointer; z-index:1025; background:url(./resource/sound.png);" onclick="toggleSound();"></a>
 		<p style="font-family:Arial,sans-serif;">This is an interior view of the <i>Chapel of the Maccabees</i> in <i>St. Pierre Cathedral</i>, Geneva. Picture by <strong><i>J-P. Scherrer</i></strong>, a professional photographer and panorama expert.</p>
 	</div>
 	<audio id="background-sound" autoplay style="display:none;">
@@ -49,16 +50,41 @@
 			stats.end();
 		};
 
+		/*
+		 *	Toggle playing of background sound.
+		 */
+		var mute_button = document.getElementById('sound-toggle');
+		function toggleSound() {
+			var audio = document.getElementById('background-sound');
+			if (audio.volume > 0) {
+				audio.volume = 0;
+				mute_button.style.background = 'url(./resource/mute.png)';
+			}
+			else {
+				audio.volume = 1;
+				mute_button.style.background = 'url(./resource/sound.png)';
+			}
+		}
+
+		/*
+		 *	Maximize/restore the panorama view and relayout UI elements.
+		 */
 		var reposition_button = document.getElementById('reposition-toggle');
 		function layoutElements() {
 			if (view.isMaximized) {
 				view.restore();
+				mute_button.style.top = '572px';
+				mute_button.style.left = '772px';
+				mute_button.style.position = 'absolute';
 				reposition_button.style.left = '760px';
 				reposition_button.style.position = 'absolute';
 				reposition_button.style.background = 'url(./resource/maximize.png)';
 			}
 			else {
 				view.maximize();
+				mute_button.style.top = (view.domElement.clientHeight - 28) + 'px';
+				mute_button.style.left = (view.domElement.clientWidth - 28) + 'px';
+				mute_button.style.position = 'fixed';
 				reposition_button.style.left = (view.domElement.clientWidth - 40) + 'px';
 				reposition_button.style.position = 'fixed';
 				reposition_button.style.background = 'url(./resource/restore.png)';
