@@ -242,8 +242,9 @@ var Pano = Pano || {};
 	function getDataURLFromCanvas(canvas, type, quality) {
 		type = type || 'image/png';
 		/*
-		 * It seems Firefox's implementation does not like the 2nd argument of toDataURL(). A security
-		 * error will occur if it is set.  See https://bugzilla.mozilla.org/show_bug.cgi?id=564388.
+		 * It seems Firefox's implementation does not like the 2nd argument for toDataURL() which 
+		 * specifies an expected quality level. A security error will occur if it is set.  See 
+		 * https://bugzilla.mozilla.org/show_bug.cgi?id=564388 for more details.
 		 */
 		return is_firefox ? canvas.toDataURL(type) : canvas.toDataURL(type, quality || 0.8);
 	}
@@ -704,6 +705,11 @@ var Pano = Pano || {};
 			pitch = (pitch != undefined) ? clamp(pitch, 0, 180) : this.cam_pitch;
 			fov = (fov != undefined) ? clamp(fov, 30, 90) : this.cam_fov;
 			duration = (duration != undefined) ? duration : 2000;
+
+			if ((typeof easingFn) == 'string') {
+				var matches = /^(\w+)\.(\w+)$/.exec(easingFn);
+				easingFn = (matches && TWEEN.Easing[matches[1]]) ? TWEEN.Easing[matches[1]][matches[2]] : undefined;
+			}
 			easingFn = easingFn || TWEEN.Easing.Quadratic.InOut;
 
 			var self = this;

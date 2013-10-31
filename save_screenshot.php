@@ -25,7 +25,7 @@
  */
 
 /**
- * Based on code originally implemented by Shinya Muramatsu <revulon@gmail.com>, 
+ * Based on code originally provided by Shinya Muramatsu <revulon@gmail.com>, 
  * and published under the MIT license.
  */
 
