@@ -1,4 +1,4 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 5.0 Transitional//EN">
+<!DOCTYPE HTML>
 <HTML>
  <HEAD>
   <TITLE> Pano.js - Basic Example </TITLE>
@@ -56,13 +56,15 @@
 		var mute_button = document.getElementById('sound-toggle');
 		function toggleSound() {
 			var audio = document.getElementById('background-sound');
-			if (audio.volume > 0) {
-				audio.volume = 0;
-				mute_button.style.background = 'url(./resource/mute.png)';
-			}
-			else {
-				audio.volume = 1;
-				mute_button.style.background = 'url(./resource/sound.png)';
+			if (audio.readyState == audio.HAVE_ENOUGH_DATA) {
+				if (audio.paused) {
+					audio.play();
+					mute_button.style.background = 'url(./resource/sound.png)';
+				}
+				else {
+					audio.pause();
+					mute_button.style.background = 'url(./resource/mute.png)';
+				}
 			}
 		}
 
