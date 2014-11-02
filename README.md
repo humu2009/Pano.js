@@ -71,7 +71,7 @@ Add a label on a given position of the panorama.
 
     view.addLensFlare(flareImgURLs, heading, pitch, range, scales)
 
-Add a group of lens flares on a given position of the panorama.
+Add a group of lens flare effect on a given position of the panorama.
 
     view.eulerToView(heading, pitch)
 
