@@ -19,3 +19,75 @@ Live Examples
 [![station demo](https://raw.github.com/humu2009/Pano.js/master/screenshots/station.jpg)](http://humu2009.github.io/Pano.js/examples/software_rendering.html)
 [![iphone demo](https://raw.github.com/humu2009/Pano.js/master/screenshots/iphone.jpg)](http://humu2009.github.io/Pano.js/examples/css3d.html)
 [![square demo](https://raw.github.com/humu2009/Pano.js/master/screenshots/square.jpg)](http://humu2009.github.io/Pano.js/examples/labeling.html)
+
+API
+---
+
+The library exposes only a single class `Pano.View` whose interface is kept as explicit as possible for use.
+
+    Pano.View(canvas, options)
+
+Constructor to create a new instance of `Pano.View` on a given canvas with optional parameters.
+* canvas - A canvas element on which to create the view instance.
+* options - A wrapper object holding a series of optional parameters.
+
+
+    view.load(url, reset)
+
+Set the URL of a new panarama image that will be loaded in.
+
+    view.reset()
+
+Reset the view to its initial state. If it is in navigation mode, the navigation will be cancelled immediately.
+
+    view.yaw(degs)
+
+Rotate the view a given angle along the horizontal axis.
+
+    view.pitch(degs)
+
+Rotate the view a given angle along the vertical axis.
+
+    view.zoom(degs)
+
+Zoom in/out the view by changing the field of view a given degrees.
+
+    view.jumpTo(heading, pitch, fov)
+
+Move the view to be aiming at a new position with new zoom factor given by the heading and pitch angles and the fov value. The change is applied immediately without approaching animation.
+
+    view.navigateTo(heading, pitch, fov, duration, callbackOnArrival, easingFn)
+
+Similar to `jumpTo` except that it starts a navigation to the new position and zoom factor using animation.
+
+    view.playTour(path)
+
+Start a tour along the path defined by a given series of nodes.
+
+    view.addLabel(innertHTML, heading, pitch, isInteractive, frameOptions, callbackOnLayout)
+
+Add a label on a given position of the panorama.
+
+    view.addLensFlare(flareImgURLs, heading, pitch, range, scales)
+
+Add a group of lens flares on a given position of the panorama.
+
+    view.eulerToView(heading, pitch)
+
+Utility method. Given a position by the heading and pitch angles, it returns the coordinates on the canvas.
+
+    view.viewToEuler(x, y)
+
+Utility method. Given the coordinates on the canvas, it returns the equivelant heading and pitch angles.
+
+    view.maximize()
+
+Resize the view/canvas to fill the client area of the browser.
+
+    view.restore()
+
+Restore the view/canvas to its original position and size.
+
+    view.saveScreenshot(basename, format, quality)
+
+Take a screenshot of the view and save it as an image file with the expected name, format and quality.
