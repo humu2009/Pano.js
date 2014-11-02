@@ -31,6 +31,7 @@ Constructor to create a new instance of `Pano.View` on a given canvas with optio
 * canvas - A canvas element on which to create the view instance.
 * options - A wrapper object holding a series of optional parameters.
 
+After `Pano.View` has been instantiated, the following method can be involked on it to manipulate the panorama and the view.
 
     view.load(url, reset)
 
