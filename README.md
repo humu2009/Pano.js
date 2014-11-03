@@ -20,7 +20,7 @@ Live Examples
 [![iphone demo](https://raw.github.com/humu2009/Pano.js/master/screenshots/iphone.jpg)](http://humu2009.github.io/Pano.js/examples/css3d.html)
 [![square demo](https://raw.github.com/humu2009/Pano.js/master/screenshots/square.jpg)](http://humu2009.github.io/Pano.js/examples/labeling.html)
 
-API
+API Document
 ---
 
 The library exposes only a single class `Pano.View` whose interface is kept as explicit as possible for use.
@@ -91,4 +91,4 @@ Restore the view/canvas to its original position and size.
 
     view.saveScreenshot(basename, format, quality)
 
-Take a screenshot of the view and save it as an image file with the expected name, format and quality.
+Take a screenshot of the view and save it as an image file with the given name, format and expected quality.
