@@ -25,7 +25,9 @@ API Document
 
 The library exposes only a single class `Pano.View` whose interface is kept as explicit as possible for use.
 
-    Pano.View(canvas, options)
+```
+Pano.View(canvas, options)
+```
 
 Constructor to create a new instance of `Pano.View` on a given canvas with optional parameters.
 * _canvas_ - A canvas element on which to create the view instance.
@@ -33,34 +35,50 @@ Constructor to create a new instance of `Pano.View` on a given canvas with optio
 
 After `Pano.View` has been instantiated, the following method can be involked on it to manipulate the panorama and the view.
 
-    view.load(url, reset)
+```
+view.load(url, reset)
+```
 
 Set the URL of a new panarama image that will be loaded in.
 * _url_ - The URL of the panorama image to load.
 * _reset_ - Whether to reinitialize the view when the new panorama image is loaded and applied. Default to _false_. 
 
 ```
-    view.reset()
+view.reset()
 ```
 
 Reset the view to its initial state. If it is in navigation mode, the navigation will be cancelled immediately.
 
-    view.yaw(degs)
+```
+view.yaw(degs)
+```
 
 Rotate the view a given angle along the horizontal axis.
 * _degs_ - Degrees to rotate.
 
-    view.pitch(degs)
+```
+view.pitch(degs)
+```
 
 Rotate the view a given angle along the vertical axis.
+* _degs_ - Degrees to rotate.
 
-    view.zoom(degs)
+```
+view.zoom(degs)
+```
 
 Zoom in/out the view by changing the field of view a given degrees.
+* _degs_ - Degrees to zoom in/out.
 
-    view.jumpTo(heading, pitch, fov)
+```
+view.jumpTo(heading, pitch, fov)
+```
 
 Move the view to be aiming at a new position with new zoom factor given by the heading and pitch angles and the fov value. The change is applied immediately without approaching animation.
+
+* _heading_ - 
+* _pitch_ - 
+* _fov_ - 
 
     view.navigateTo(heading, pitch, fov, duration, callbackOnArrival, easingFn)
 
@@ -78,22 +96,39 @@ Add a label on a given position of the panorama.
 
 Add a group of lens flare effect on a given position of the panorama.
 
-    view.eulerToView(heading, pitch)
+```
+view.eulerToView(heading, pitch)
+```
 
-Utility method. Given a position by the heading and pitch angles, it returns the coordinates on the canvas.
+Utility method. Given a position by the heading and pitch angles, it returns the (x, y) coordinates on the canvas.
+* _heading_ - The heading angle in degrees.
+* _pitch_ - The pitch angle in degrees.
 
-    view.viewToEuler(x, y)
+```
+view.viewToEuler(x, y)
+```
 
 Utility method. Given the coordinates on the canvas, it returns the equivelant heading and pitch angles.
+* _x_ - X coordinate on canvas in pixels.
+* _y_ - Y coordinate on canvas in pixels.
 
-    view.maximize()
+```
+view.maximize()
+```
 
 Resize the view/canvas to fill the client area of the browser.
 
-    view.restore()
+```
+view.restore()
+```
 
 Restore the view/canvas to its original position and size.
 
-    view.saveScreenshot(basename, format, quality)
+```
+view.saveScreenshot(basename, format, quality)
+```
 
 Take a screenshot of the view and save it as an image file with the given name, format and expected quality.
+* _basename_ - File name of the result.
+* _format_ - Image format to save as.
+* _quality_ - Expected quality if the specified image format uses lossy compression.
