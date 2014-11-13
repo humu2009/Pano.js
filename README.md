@@ -31,7 +31,13 @@ Pano.View(canvas, options)
 
 Constructor to create a new instance of `Pano.View` on a given canvas with optional parameters.
 * `canvas` - A canvas element on which to create the view instance.
-* `options` - A wrapper object holding a series of optional parameters.
+* `options` - A wrapper object holding a series of optional parameters, including:
+  * `heading` - The initial heading angle of the view. Default to _90_.
+  * `pitch` - The initial pitch angle of the view. Default to _90_.
+  * `fov` - The initial field of view angle. Default to _90_.
+  * `rendering` - Suggests the rendering method to use. This can be _'webgl'_ or _'software'_. Default to _'webgl'_ if WebGL is available on the browser.
+  * `inertial` - Set this to _'on'_ or _'off'_ to turn on/off inertial move. Default to _'on'_.
+  * `filtering` - Whether and when to activate filtering to gain better image quality. This can be _'on'_, _'off'_ or _'on-idle'_. Default to _'on-idle'_.
 
 After `Pano.View` has been instantiated, the following method can be involked on it to manipulate the panorama and the view.
 
@@ -76,23 +82,31 @@ view.jumpTo(heading, pitch, fov)
 
 Move the view to be aiming at a new position with new zoom factor given by the heading and pitch angles and the fov value. The change is applied immediately without approaching animation.
 
-* `heading` - 
-* `pitch` - 
-* `fov` - 
+* `heading` - The heading angle in degrees.
+* `pitch` - The pitch angle in degrees.
+* `fov` - The fov angle in degrees the specifies the zoom factor.
 
-    view.navigateTo(heading, pitch, fov, duration, callbackOnArrival, easingFn)
+```
+view.navigateTo(heading, pitch, fov, duration, callbackOnArrival, easingFn)
+```
 
 Similar to `jumpTo` except that it starts a navigation to the new position and zoom factor using animation.
 
-    view.playTour(path)
+```
+view.playTour(path)
+```
 
 Start a tour along the path defined by a given series of nodes.
 
-    view.addLabel(innertHTML, heading, pitch, isInteractive, frameOptions, callbackOnLayout)
+```
+view.addLabel(innertHTML, heading, pitch, isInteractive, frameOptions, callbackOnLayout)
+```
 
 Add a label on a given position of the panorama.
 
-    view.addLensFlare(flareImgURLs, heading, pitch, range, scales)
+```
+view.addLensFlare(flareImgURLs, heading, pitch, range, scales)
+```
 
 Add a group of lens flare effect on a given position of the panorama.
 
@@ -129,6 +143,6 @@ view.saveScreenshot(basename, format, quality)
 ```
 
 Take a screenshot of the view and save it as an image file with the given name, format and expected quality.
-* `basename` - File name of the result.
-* `format` - Image format to save as.
-* `quality` - Expected quality if the specified image format uses lossy compression.
+* `basename` - File name of the result. Default to _'screenshot'_.
+* `format` - Image format to save as. This can be _'jpeg'_, _'png'_, or _'gif'_. Default to _'jpeg'_.
+* `quality` - Expected quality if the specified format uses lossy compression. Default to _0.8_.
