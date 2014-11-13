@@ -39,7 +39,7 @@ Set the URL of a new panarama image that will be loaded in.
 * _url_ - The URL of the panorama image to load.
 * _reset_ - Whether to reinitialize the view when the new panorama image is loaded and applied. Default to _false_.
 
-    `view.reset()`
+<code>view.reset()<code>
 
 Reset the view to its initial state. If it is in navigation mode, the navigation will be cancelled immediately.
 
