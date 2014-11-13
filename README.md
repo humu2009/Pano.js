@@ -102,16 +102,40 @@ view.playTour(path)
 ```
 
 Start a tour along the path defined by a given series of nodes.
+* `path` - An array which contains a series of nodes defining the path of the tour. Each node should be an object specifying the node's position and an optional action:
+  * `heading` - The heading angle in degrees that specifies the position of the node.
+  * `pitch` - The pitch angle in degrees that specifies the position of the node.
+  * `fov` - The fov angle in degrees that specifies the zoom factor on the node.
+  * `duration` - Time length in milliseconds of the animation between the node and the next node.
+  * `hoverTime` - Time length in milliseconds to hover on the node.
+  * `onArrival` - A function that will be called when the node is reached.
+
+On implementation level, `navigateTo` is used to navigate between each node.
 
 ```
 view.addLabel(innertHTML, heading, pitch, isInteractive, frameOptions, callbackOnLayout)
 ```
 
 Add a label on a given position of the panorama.
+* `innerHTML` - 
+* `heading` - 
+* `pitch` - 
+* `isInteractive` - 
+* `frameOptions` - 
+* `callbackOnLayout` - 
+
+An example of labeling can be found [here](https://github.com/humu2009/Pano.js/blob/master/examples/labeling.html).
 
 ```
 view.addLensFlare(flareImgURLs, heading, pitch, range, scales)
 ```
+* `flareImgURLs` - 
+* `heading` - 
+* `pitch` - 
+* `range` - 
+* `scales` - 
+
+An example of adding lens flares can be found [here](https://github.com/humu2009/Pano.js/blob/master/examples/software_rendering.html).
 
 Add a group of lens flare effect on a given position of the panorama.
 
