@@ -28,14 +28,19 @@ The library exposes only a single class `Pano.View` whose interface is kept as e
     Pano.View(canvas, options)
 
 Constructor to create a new instance of `Pano.View` on a given canvas with optional parameters.
-* canvas - A canvas element on which to create the view instance.
-* options - A wrapper object holding a series of optional parameters.
+* _canvas_ - A canvas element on which to create the view instance.
+* _options_ - A wrapper object holding a series of optional parameters.
 
 After `Pano.View` has been instantiated, the following method can be involked on it to manipulate the panorama and the view.
 
     view.load(url, reset)
 
 Set the URL of a new panarama image that will be loaded in.
+* _url_ - The URL of the panorama image to load.
+* _reset_ - Whether to reinitialize the view when the new panorama image is loaded and applied. Default to _false_.
+
+
+
 
     view.reset()
 
