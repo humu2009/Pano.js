@@ -8,7 +8,9 @@ How to
 
 Pano.js can be easily integrated into online applications. The simplest usage only requires a single line:
 
-    var view = new Pano.View( canvas_tag, { equirectangular: 'my_panorama.jpg' } );
+```js
+var view = new Pano.View( canvas_tag, { equirectangular: 'my_panorama.jpg' } );
+```
 
 which creates an instance of `Pano.View`, and then loads a panorama image and displays it on a given canvas element.
 
@@ -166,6 +168,8 @@ view.restore()
 ```
 
 Restore the view/canvas to its original position and size.
+
+An example that demonstrates the useage of `maximize` and `restore` can be found [here](https://github.com/humu2009/Pano.js/blob/master/examples/basic.html).
 
 ```
 view.saveScreenshot(basename, format, quality)
