@@ -40,8 +40,6 @@ Set the URL of a new panarama image that will be loaded in.
 * _reset_ - Whether to reinitialize the view when the new panorama image is loaded and applied. Default to _false_.
 
 
-
-
     view.reset()
 
 Reset the view to its initial state. If it is in navigation mode, the navigation will be cancelled immediately.
@@ -49,6 +47,8 @@ Reset the view to its initial state. If it is in navigation mode, the navigation
     view.yaw(degs)
 
 Rotate the view a given angle along the horizontal axis.
+* _degs_ - Degrees to rotate.
+
 
     view.pitch(degs)
 
