@@ -81,16 +81,21 @@ view.jumpTo(heading, pitch, fov)
 ```
 
 Move the view to be aiming at a new position with new zoom factor given by the heading and pitch angles and the fov value. The change is applied immediately without approaching animation.
-
-* `heading` - The heading angle in degrees.
-* `pitch` - The pitch angle in degrees.
-* `fov` - The fov angle in degrees the specifies the zoom factor.
+* `heading` - The heading angle in degrees to jump to. Default to current angle.
+* `pitch` - The pitch angle in degrees to jump to. Default to current angle.
+* `fov` - The fov angle in degrees to jump to, which specifies the zoom factor. Default to current angle.
 
 ```
 view.navigateTo(heading, pitch, fov, duration, callbackOnArrival, easingFn)
 ```
 
 Similar to `jumpTo` except that it starts a navigation to the new position and zoom factor using animation.
+* `heading` - The heading angle in degrees to navigate to. Default to current angle.
+* `pitch` - The pitch angle in degrees to navigate to. Default to current angle.
+* `fov` - The fov angle in degrees to navigate to. Default to current angle.
+* `duration` - Time length in milliseconds after which the target position is reached. Default to _2000_.
+* `callbackOnArrival` - A function that will be invoked at the end of the navigation. Default to _null_.
+* `easingFn` - Specifies the interpolation method used to smooth the animation. Default to _'Quadratic.InOut'_.
 
 ```
 view.playTour(path)
