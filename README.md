@@ -167,9 +167,9 @@ Resize the view/canvas to fill the client area of the browser.
 view.restore()
 ```
 
-Restore the view/canvas to its original position and size.
+Restore the view/canvas to original position and size before last call of `maximize`.
 
-An example that demonstrates the useage of `maximize` and `restore` can be found [here](https://github.com/humu2009/Pano.js/blob/master/examples/basic.html).
+An example that demonstrates the usage of `maximize` and `restore` can be found [here](https://github.com/humu2009/Pano.js/blob/master/examples/basic.html).
 
 ```
 view.saveScreenshot(basename, format, quality)
