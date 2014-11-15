@@ -40,6 +40,7 @@ Constructor to create a new instance of `Pano.View` on a given canvas with optio
   * `rendering` - Suggests the rendering method to use. This can be _'webgl'_ or _'software'_. Default to _'webgl'_ if WebGL is available on the browser.
   * `inertial` - Set this to _'on'_ or _'off'_ to turn on/off inertial move. Default to _'on'_.
   * `filtering` - Whether and when to activate filtering to gain better image quality. This can be _'on'_, _'off'_ or _'on-idle'_. Default to _'on-idle'_.
+  * `equirectangular` - The URL of the panorama image to load. Default to empty string.
 
 After `Pano.View` has been instantiated, the following method can be involked on it to manipulate the panorama and the view.
 
