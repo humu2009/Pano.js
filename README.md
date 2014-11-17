@@ -132,15 +132,14 @@ An example of labeling can be found [here](https://github.com/humu2009/Pano.js/b
 ```
 view.addLensFlare(flareImgURLs, heading, pitch, range, scales)
 ```
-* `flareImgURLs` - 
-* `heading` - 
-* `pitch` - 
-* `range` - 
-* `scales` - 
+Add a group of lens flare effect on a given position of the panorama.
+* `flareImgURLs` - An array containing URLs of a group of circle/ring images which will be used for the flare.
+* `heading` - The heading angle in degrees that specifies the position of the light source, where the flare starts.
+* `pitch` - The pitch angle in degrees that specifies the position of the light source.
+* `range` - This number influnces the distribution of circles/rings along the axis of the flare.
+* `scales` - An array of factors which will be used to scale the circle/ring images to appropriate sizes.
 
 An example of adding lens flares can be found [here](https://github.com/humu2009/Pano.js/blob/master/examples/software_rendering.html).
-
-Add a group of lens flare effect on a given position of the panorama.
 
 ```
 view.eulerToView(heading, pitch)
