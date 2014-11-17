@@ -120,10 +120,10 @@ view.addLabel(innertHTML, heading, pitch, isInteractive, frameOptions, callbackO
 ```
 
 Add a label on a given position of the panorama.
-* `innerHTML` - 
-* `heading` - 
-* `pitch` - 
-* `isInteractive` - 
+* `innerHTML` - Content of the label. It can either be a plain text or a segment of HTML enclosed by tags.
+* `heading` - The heading angle in degrees which specifies where the label should be placed.
+* `pitch` - The pitch angle in degrees that specifies where the label should be placed.
+* `isInteractive` - Whether the label is interactive.
 * `frameOptions` - 
 * `callbackOnLayout` - 
 
@@ -133,11 +133,11 @@ An example of labeling can be found [here](https://github.com/humu2009/Pano.js/b
 view.addLensFlare(flareImgURLs, heading, pitch, range, scales)
 ```
 Add a group of lens flare effect on a given position of the panorama.
-* `flareImgURLs` - An array containing URLs of a group of circle/ring images which will be used for the flare.
+* `flareImgURLs` - An array containing the URLs of a group of circle/ring images which will be used for the flare.
 * `heading` - The heading angle in degrees that specifies the position of the light source, where the flare starts.
 * `pitch` - The pitch angle in degrees that specifies the position of the light source.
 * `range` - This number influnces the distribution of circles/rings along the axis of the flare.
-* `scales` - An array of factors which will be used to scale the circle/ring images to appropriate sizes.
+* `scales` - An array of factors which will be used to scale the circle/ring images to appropriate sizes to display.
 
 An example of adding lens flares can be found [here](https://github.com/humu2009/Pano.js/blob/master/examples/software_rendering.html).
 
