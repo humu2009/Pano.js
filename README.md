@@ -120,12 +120,18 @@ view.addLabel(innertHTML, heading, pitch, isInteractive, frameOptions, callbackO
 ```
 
 Add a label on a given position of the panorama.
-* `innerHTML` - Content of the label. It can either be a plain text or a segment of HTML enclosed by tags.
+* `innerHTML` - Content of the label. It can either be a plain text or a segment of HTML enclosed by tags. This feature enables design of complicated labels.
 * `heading` - The heading angle in degrees which specifies where the label should be placed.
 * `pitch` - The pitch angle in degrees that specifies where the label should be placed.
 * `isInteractive` - Whether the label is interactive.
-* `frameOptions` - 
-* `callbackOnLayout` - 
+* `frameOptions` - An object providing parameters to customize the frame of the label:
+  * `width` - The width of the whole label in pixels. Default to _'200px'_.
+  * `textAlign` - The text align style of the content. Default to _'left'_.
+  * `borderWidth` - The width of the frame border in pixels. Default to _'3px'_.
+  * `borderColor` - The color of the frame border. Default to _'#5a8f00'_.
+  * `foregroundColor` - The color to render the content of the label. Default to _'#333'_.
+  * `backgroundColor` - The color used to fill the background of the label. Default to _'#fff'_.
+* `callbackOnLayout` - (todo)
 
 An example of labeling can be found [here](https://github.com/humu2009/Pano.js/blob/master/examples/labeling.html).
 
